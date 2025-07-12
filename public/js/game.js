@@ -53,6 +53,30 @@ const elements = {
     eventChoices: document.getElementById('event-choices')
 };
 
+// Update status message
+function updateStatus(message, type = 'info') {
+    if (!elements.status) return;
+    
+    elements.status.textContent = message;
+    elements.status.className = 'status';
+    
+    if (type === 'error') {
+        elements.status.classList.add('error');
+    } else if (type === 'success') {
+        elements.status.classList.add('success');
+    }
+    
+    // Auto-hide success messages after 5 seconds
+    if (type === 'success') {
+        setTimeout(() => {
+            if (elements.status.textContent === message) {
+                elements.status.textContent = 'Connected';
+                elements.status.className = 'status';
+            }
+        }, 5000);
+    }
+}
+
 // Initialize game
 async function init() {
     // Initialize statistics
@@ -95,24 +119,43 @@ async function handleCreateKingdom(e) {
         });
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to create kingdom');
+            let errorMessage = 'Failed to create kingdom';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                // If JSON parsing fails, use status text
+                errorMessage = `Server error: ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
         }
         
         const data = await response.json();
         console.log('Create kingdom response:', data);
         
         if (!data.kingdomId) {
-            throw new Error('Invalid response: missing kingdomId');
+            throw new Error('Server returned invalid data. Please try again.');
         }
         
         gameState.kingdomId = data.kingdomId;
         localStorage.setItem('currentKingdomId', gameState.kingdomId);
         
+        updateStatus('Kingdom created successfully!', 'success');
         await loadKingdom();
     } catch (error) {
         console.error('Create kingdom error:', error);
-        updateStatus('Error: ' + error.message, 'error');
+        
+        // User-friendly error messages
+        let userMessage = error.message;
+        if (error.message.includes('Failed to fetch')) {
+            userMessage = 'Cannot connect to server. Please check your internet connection.';
+        } else if (error.message.includes('NetworkError')) {
+            userMessage = 'Network error. Please try again.';
+        } else if (error.message.includes('kingdom name')) {
+            userMessage = 'Please enter a valid kingdom name.';
+        }
+        
+        updateStatus(userMessage, 'error');
     }
 }
 
@@ -122,7 +165,14 @@ async function loadKingdom() {
         updateStatus('Loading kingdom...');
         
         const response = await fetch(`${API_BASE}/kingdoms/${gameState.kingdomId}`);
-        if (!response.ok) throw new Error('Failed to load kingdom');
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Kingdom not found. It may have been deleted.');
+            } else {
+                throw new Error(`Failed to load kingdom (${response.status})`);
+            }
+        }
         
         gameState.kingdom = await response.json();
         
@@ -136,12 +186,25 @@ async function loadKingdom() {
         // Load events
         await loadEvents();
         
-        updateStatus('Kingdom loaded');
+        updateStatus('Connected', 'success');
     } catch (error) {
-        updateStatus('Error: ' + error.message, 'error');
+        console.error('Load kingdom error:', error);
+        
+        let userMessage = error.message;
+        if (error.message.includes('Failed to fetch')) {
+            userMessage = 'Cannot connect to server. Please check your internet connection.';
+        } else if (error.message.includes('NetworkError')) {
+            userMessage = 'Network error. Please refresh the page and try again.';
+        }
+        
+        updateStatus(userMessage, 'error');
+        
         // Clear invalid kingdom ID
         localStorage.removeItem('currentKingdomId');
         gameState.kingdomId = null;
+        
+        // Show start screen again
+        showStartScreen();
     }
 }
 
@@ -152,6 +215,15 @@ function showGameScreen() {
     elements.calculateTickBtn.classList.remove('hidden');
     document.getElementById('show-statistics').classList.remove('hidden');
     updatePrestigeButton();
+}
+
+// Show start screen
+function showStartScreen() {
+    elements.gameScreen.classList.add('hidden');
+    elements.startScreen.classList.remove('hidden');
+    elements.calculateTickBtn.classList.add('hidden');
+    const statsBtn = document.getElementById('show-statistics');
+    if (statsBtn) statsBtn.classList.add('hidden');
 }
 
 // Update kingdom display
