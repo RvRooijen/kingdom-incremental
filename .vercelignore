@@ -1,0 +1,10 @@
+node_modules
+.git
+tests
+*.test.ts
+jest.config.js
+.eslintrc.js
+CLAUDE_INSTRUCTIONS.md
+*.log
+coverage
+.env

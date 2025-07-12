@@ -1,0 +1,495 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #1a1a2e;
+    color: #eee;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+header {
+    background-color: #16213e;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+h1 {
+    color: #f39c12;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.status {
+    background-color: #0f3460;
+    padding: 5px 15px;
+    border-radius: 20px;
+    display: inline-block;
+    font-size: 0.9em;
+}
+
+.status.error {
+    background-color: #e74c3c;
+}
+
+/* Screens */
+.screen {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Start Screen */
+#start-screen {
+    max-width: 400px;
+    margin: 50px auto;
+    background-color: #16213e;
+    padding: 40px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#create-kingdom-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+input[type="text"] {
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: #0f3460;
+    color: #eee;
+    font-size: 16px;
+}
+
+input[type="text"]:focus {
+    outline: 2px solid #f39c12;
+}
+
+button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    background-color: #f39c12;
+    color: #1a1a2e;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+    background-color: #e67e22;
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    background-color: #7f8c8d;
+    cursor: not-allowed;
+}
+
+/* Game Screen */
+#game-screen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* Panels */
+.panel {
+    background-color: #16213e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.panel h2 {
+    color: #f39c12;
+    margin-bottom: 15px;
+    font-size: 1.4em;
+}
+
+.panel h3 {
+    color: #3498db;
+    margin: 15px 0 10px 0;
+    font-size: 1.1em;
+}
+
+/* Resources */
+.resources {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.resource {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #0f3460;
+    border-radius: 5px;
+}
+
+.resource-icon {
+    font-size: 1.5em;
+}
+
+.resource-name {
+    flex: 1;
+}
+
+.resource-value {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #f39c12;
+}
+
+.resource-rate {
+    font-size: 0.9em;
+    color: #3498db;
+}
+
+/* Court */
+.court-members {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.court-member {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #0f3460;
+    border-radius: 5px;
+    flex: 1;
+}
+
+.member-icon {
+    font-size: 2em;
+}
+
+.advisors {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.advisor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #0f3460;
+    border-radius: 5px;
+}
+
+.advisor-icon {
+    font-size: 1.5em;
+}
+
+.no-advisors, .no-events {
+    text-align: center;
+    color: #7f8c8d;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Factions */
+.factions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.faction {
+    padding: 15px;
+    background-color: #0f3460;
+    border-radius: 5px;
+    border-left: 4px solid #3498db;
+}
+
+.faction.hostile {
+    border-left-color: #e74c3c;
+}
+
+.faction.unhappy {
+    border-left-color: #e67e22;
+}
+
+.faction.content {
+    border-left-color: #2ecc71;
+}
+
+.faction.loyal {
+    border-left-color: #f39c12;
+}
+
+.faction-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.faction-name {
+    font-weight: bold;
+}
+
+.faction-mood {
+    font-size: 0.9em;
+}
+
+.faction-approval {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.approval-bar {
+    flex: 1;
+    height: 10px;
+    background-color: #1a1a2e;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.approval-fill {
+    height: 100%;
+    background-color: #3498db;
+    transition: width 0.3s ease;
+}
+
+.approval-text {
+    font-weight: bold;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* Events */
+.events {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.event {
+    padding: 15px;
+    background-color: #0f3460;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.event:hover {
+    transform: translateY(-2px);
+}
+
+.event-header {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.event-type {
+    padding: 2px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.event-type.political {
+    background-color: #9b59b6;
+}
+
+.event-type.economic {
+    background-color: #f39c12;
+}
+
+.event-type.military {
+    background-color: #e74c3c;
+}
+
+.event-type.social {
+    background-color: #3498db;
+}
+
+.event-type.diplomatic {
+    background-color: #2ecc71;
+}
+
+.event-title {
+    font-weight: bold;
+}
+
+.event-preview {
+    color: #bdc3c7;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #16213e;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease;
+}
+
+.modal-content h2 {
+    color: #f39c12;
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    margin-bottom: 20px;
+    line-height: 1.8;
+}
+
+.event-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.event-choice {
+    padding: 15px;
+    background-color: #0f3460;
+    border-radius: 5px;
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+.event-choice:hover:not(.disabled) {
+    border-color: #3498db;
+}
+
+.event-choice.disabled {
+    opacity: 0.5;
+}
+
+.event-choice h4 {
+    color: #3498db;
+    margin-bottom: 10px;
+}
+
+.requirements {
+    color: #e74c3c;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.preview {
+    color: #2ecc71;
+    font-size: 0.9em;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+/* Footer */
+footer {
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #16213e;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.game-info {
+    display: flex;
+    gap: 30px;
+}
+
+.game-info span {
+    color: #bdc3c7;
+}
+
+.btn-secondary {
+    background-color: #3498db;
+}
+
+.btn-secondary:hover {
+    background-color: #2980b9;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #game-screen {
+        grid-template-columns: 1fr;
+    }
+    
+    .court-members {
+        flex-direction: column;
+    }
+    
+    footer {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .game-info {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

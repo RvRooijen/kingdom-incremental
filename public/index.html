@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingdom Incremental</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>Kingdom Incremental</h1>
+            <div id="status" class="status">Not connected</div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main>
+            <!-- Kingdom Start Screen -->
+            <div id="start-screen" class="screen">
+                <h2>Create Your Kingdom</h2>
+                <form id="create-kingdom-form">
+                    <input type="text" id="kingdom-name" placeholder="Kingdom Name" required>
+                    <input type="text" id="ruler-name" placeholder="Ruler Name" required>
+                    <button type="submit">Start Game</button>
+                </form>
+            </div>
+
+            <!-- Game Screen -->
+            <div id="game-screen" class="screen hidden">
+                <!-- Resources Panel -->
+                <section class="panel resources-panel">
+                    <h2>Resources</h2>
+                    <div class="resources">
+                        <div class="resource">
+                            <span class="resource-icon">💰</span>
+                            <span class="resource-name">Gold:</span>
+                            <span id="gold" class="resource-value">0</span>
+                            <span class="resource-rate">(+<span id="gold-rate">0</span>/s)</span>
+                        </div>
+                        <div class="resource">
+                            <span class="resource-icon">✨</span>
+                            <span class="resource-name">Influence:</span>
+                            <span id="influence" class="resource-value">0</span>
+                            <span class="resource-rate">(+<span id="influence-rate">0</span>/s)</span>
+                        </div>
+                        <div class="resource">
+                            <span class="resource-icon">❤️</span>
+                            <span class="resource-name">Loyalty:</span>
+                            <span id="loyalty" class="resource-value">0</span>
+                        </div>
+                        <div class="resource">
+                            <span class="resource-icon">👥</span>
+                            <span class="resource-name">Population:</span>
+                            <span id="population" class="resource-value">0</span>
+                        </div>
+                        <div class="resource">
+                            <span class="resource-icon">⚔️</span>
+                            <span class="resource-name">Military:</span>
+                            <span id="military-power" class="resource-value">0</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Royal Court Panel -->
+                <section class="panel court-panel">
+                    <h2>Royal Court</h2>
+                    <div class="court-members">
+                        <div class="court-member">
+                            <span class="member-icon">👑</span>
+                            <span id="king-name">The King</span>
+                        </div>
+                        <div class="court-member">
+                            <span class="member-icon">👸</span>
+                            <span id="queen-name">The Queen</span>
+                        </div>
+                    </div>
+                    <h3>Advisors</h3>
+                    <div id="advisors" class="advisors">
+                        <p class="no-advisors">No advisors recruited yet</p>
+                    </div>
+                </section>
+
+                <!-- Factions Panel -->
+                <section class="panel factions-panel">
+                    <h2>Factions</h2>
+                    <div id="factions" class="factions">
+                        <!-- Factions will be populated by JavaScript -->
+                    </div>
+                </section>
+
+                <!-- Events Panel -->
+                <section class="panel events-panel">
+                    <h2>Events</h2>
+                    <div id="events" class="events">
+                        <p class="no-events">No active events</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <button id="calculate-tick" class="btn-secondary hidden">Force Resource Tick</button>
+            <div class="game-info">
+                <span>Kingdom: <span id="kingdom-display-name">-</span></span>
+                <span>Prestige Level: <span id="prestige-level">0</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Event Modal -->
+    <div id="event-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="event-title">Event Title</h2>
+            <p id="event-description">Event description...</p>
+            <div id="event-choices" class="event-choices">
+                <!-- Choices will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>

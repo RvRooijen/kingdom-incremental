@@ -14,7 +14,8 @@
     "format": "prettier --write src/**/*.ts",
     "migration:create": "typeorm migration:create",
     "migration:run": "typeorm migration:run",
-    "migration:revert": "typeorm migration:revert"
+    "migration:revert": "typeorm migration:revert",
+    "vercel-build": "npm run build"
   },
   "keywords": ["incremental", "game", "kingdom", "typescript"],
   "author": "Rick",

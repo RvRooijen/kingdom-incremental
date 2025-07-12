@@ -1,6 +1,7 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import { KingdomController } from './controllers/KingdomController';
 import { EventController } from './controllers/EventController';
 import { errorHandler } from './middleware/errorHandler';
@@ -12,6 +13,9 @@ export const createApp = (): Application => {
   app.use(helmet());
   app.use(cors());
   app.use(express.json());
+
+  // Serve static files
+  app.use(express.static(path.join(__dirname, '../../public')));
 
   // Health check
   app.get('/health', (_req, res) => {
@@ -46,3 +50,6 @@ if (require.main === module) {
     console.log(`Server running on port ${PORT}`);
   });
 }
+
+// Export for Vercel
+export default createApp();

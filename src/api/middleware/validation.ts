@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { ValidationError } from './errorHandler';
 
 export interface ValidationRule {
   field: string;
@@ -12,7 +11,7 @@ export interface ValidationRule {
 }
 
 export const validate = (rules: ValidationRule[]) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     const errors: Record<string, string[]> = {};
     
     for (const rule of rules) {
@@ -73,9 +72,12 @@ export const validate = (rules: ValidationRule[]) => {
       }
     }
     
-    // If there are errors, throw ValidationError
+    // If there are errors, create error with validation details
     if (Object.keys(errors).length > 0) {
-      throw new ValidationError('Validation failed', errors);
+      const error = new Error('Validation failed') as any;
+      error.status = 400;
+      error.validationErrors = errors;
+      throw error;
     }
     
     next();
@@ -89,7 +91,7 @@ export const validateUUID = (fieldName: string = 'id') => {
     required: true,
     type: 'string',
     pattern: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-    custom: (value) => `${fieldName} must be a valid UUID`
+    custom: (_value) => `${fieldName} must be a valid UUID`
   }]);
 };
 
@@ -100,5 +102,5 @@ export const validateKingdomName = validate([{
   min: 3,
   max: 50,
   pattern: /^[a-zA-Z0-9\s'-]+$/,
-  custom: (value) => 'Kingdom name can only contain letters, numbers, spaces, hyphens and apostrophes'
+  custom: (_value) => 'Kingdom name can only contain letters, numbers, spaces, hyphens and apostrophes'
 }]);
