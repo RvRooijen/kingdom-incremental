@@ -18,8 +18,14 @@ export const createApp = (): Application => {
   app.use(express.static(path.join(__dirname, '../../public')));
 
   // Health check
-  app.get('/health', (_req, res) => {
-    res.json({ status: 'ok' });
+  app.get('/health', async (_req, res) => {
+    const hasKV = !!(process.env['KV_REST_API_URL'] && process.env['NODE_ENV'] === 'production');
+    
+    res.json({ 
+      status: 'ok',
+      database: hasKV ? 'vercel-kv' : 'in-memory',
+      environment: process.env['NODE_ENV'] || 'development'
+    });
   });
 
   // Controllers

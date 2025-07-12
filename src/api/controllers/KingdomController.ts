@@ -4,6 +4,7 @@ import { GetKingdomStateQuery } from '../../application/queries/GetKingdomStateQ
 import { IKingdomRepository } from '../../application/interfaces/IKingdomRepository';
 import { IUnitOfWork } from '../../application/interfaces/IUnitOfWork';
 import { Kingdom } from '../../domain/entities/Kingdom';
+import { VercelKVRepository } from '../../infrastructure/repositories/VercelKVRepository';
 
 // Mock implementation of IKingdomRepository
 class MockKingdomRepository implements IKingdomRepository {
@@ -57,10 +58,18 @@ export class KingdomController {
   private unitOfWork: IUnitOfWork;
 
   constructor() {
-    this.kingdomRepository = new MockKingdomRepository();
+    // Use Vercel KV in production, mock in development
+    const useVercelKV = process.env['KV_REST_API_URL'] && process.env['NODE_ENV'] === 'production';
+    
+    this.kingdomRepository = useVercelKV 
+      ? new VercelKVRepository()
+      : new MockKingdomRepository();
+      
     this.unitOfWork = new MockUnitOfWork();
     this.createKingdomCommand = new CreateKingdomCommand(this.kingdomRepository, this.unitOfWork);
     this.getKingdomStateQuery = new GetKingdomStateQuery(this.kingdomRepository);
+    
+    console.log(`Using ${useVercelKV ? 'Vercel KV' : 'Mock'} repository`);
   }
 
   getKingdom = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -122,20 +131,22 @@ export class KingdomController {
         return;
       }
       
-      // First check if kingdom exists using the query
-      const kingdomState = await this.getKingdomStateQuery.execute(id);
-      if (!kingdomState) {
+      // Load the domain entity
+      const kingdom = await this.kingdomRepository.findById(id);
+      if (!kingdom) {
         res.status(404).json({ error: 'Kingdom not found' });
         return;
       }
       
-      // For now, just return the current state
-      // In a real implementation, we would:
-      // 1. Load the domain entity
-      // 2. Calculate tick
-      // 3. Save it
-      // 4. Return the updated state
-      res.json(kingdomState);
+      // Calculate resource generation (1 second tick)
+      kingdom.calculateResourceGeneration(1);
+      
+      // Save the updated kingdom
+      await this.kingdomRepository.save(kingdom);
+      
+      // Return the updated state
+      const updatedState = await this.getKingdomStateQuery.execute(id);
+      res.json(updatedState);
     } catch (error) {
       next(error);
     }
