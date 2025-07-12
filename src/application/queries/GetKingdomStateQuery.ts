@@ -16,11 +16,10 @@ export class GetKingdomStateQuery {
       return null;
     }
 
-    // Map domain entities to DTOs
-    return {
-      kingdomId: kingdom.id,
-      kingdomName: kingdom.name,
-      rulerName: kingdom.court.king.name,
+    // Map domain entities to match frontend expectations
+    const kingdomData: any = {
+      id: kingdom.id,
+      name: kingdom.name,
       resources: {
         gold: kingdom.resources.gold,
         influence: kingdom.resources.influence,
@@ -28,19 +27,32 @@ export class GetKingdomStateQuery {
         population: kingdom.resources.population,
         militaryPower: kingdom.resources.militaryPower
       },
-      advisors: Array.from(kingdom.court.advisors.entries()).map(([id, advisor]: [string, any]) => ({
-        id,
-        name: advisor.name || 'Unknown',
-        specialty: advisor.specialty || 'Unknown',
-        effectiveness: advisor.effectiveness || 0
-      })),
+      court: {
+        king: {
+          name: kingdom.court.king.name,
+          title: kingdom.court.king.title
+        },
+        queen: {
+          name: kingdom.court.queen.name,
+          title: kingdom.court.queen.title
+        },
+        advisors: Array.from(kingdom.court.advisors.values())
+      },
       factions: Array.from(kingdom.factions.values()).map(faction => ({
+        type: faction.type,
         name: faction.name,
-        description: faction.type,
-        loyalty: faction.approvalRating,
-        influence: faction.approvalRating // Using approval rating as a proxy for influence
+        approvalRating: faction.approvalRating,
+        mood: faction.mood
       })),
-      currentTurn: 1 // This would come from a game state service in a real implementation
+      prestigeLevel: 0,
+      generationRates: {
+        gold: 1,
+        influence: 1,
+        faith: 0,
+        knowledge: 0
+      }
     };
+
+    return kingdomData;
   }
 }
