@@ -27,14 +27,9 @@ export { SocialEvent } from './events/SocialEvent';
 export { DiplomaticEvent } from './events/DiplomaticEvent';
 export { FactionEvent } from './events/FactionEvent';
 
-// Event Chains
-export * from './events/chains';
-
 // Services
 export { ResourceGenerator } from './services/ResourceGenerator';
 export { FactionService } from './services/FactionService';
-export { EventChainService, ChainContext, ChainCompletionReward } from './services/EventChainService';
-export { EventChainManager, EventChainSpawnCondition } from './services/EventChainManager';
 
 // Domain Events
 export { DomainEvent } from './events/DomainEvent';
