@@ -28,4 +28,6 @@ export interface KingdomStateDto {
   advisors: AdvisorDto[];
   factions: FactionDto[];
   currentTurn: number;
+  prestigeLevel?: number;
+  completedEventsCount?: number;
 }

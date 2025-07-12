@@ -36,7 +36,9 @@ export class GetKingdomStateQuery {
           name: kingdom.court.queen.name,
           title: kingdom.court.queen.title
         },
-        advisors: Array.from(kingdom.court.advisors.values())
+        advisors: kingdom.court.advisors instanceof Array 
+          ? kingdom.court.advisors 
+          : Array.from(kingdom.court.advisors.values())
       },
       factions: Array.from(kingdom.factions.values()).map(faction => ({
         type: faction.type,
@@ -44,7 +46,8 @@ export class GetKingdomStateQuery {
         approvalRating: faction.approvalRating,
         mood: faction.mood
       })),
-      prestigeLevel: 0,
+      prestigeLevel: kingdom.prestigeLevel || 0,
+      completedEventsCount: kingdom.completedEventsCount || 0,
       generationRates: {
         gold: 1,
         influence: 1,

@@ -81,6 +81,101 @@
                     </div>
                 </section>
 
+                <!-- Advisor Recruitment Panel -->
+                <section class="panel advisor-recruitment-panel">
+                    <h2>Recruit Advisors</h2>
+                    <p class="recruitment-info">Recruit skilled advisors to boost your kingdom's productivity and unlock new abilities.</p>
+                    <div id="available-advisors" class="available-advisors">
+                        <!-- Treasurer -->
+                        <div class="advisor-card" data-advisor-type="treasurer">
+                            <div class="advisor-header">
+                                <span class="advisor-icon">💰</span>
+                                <h3>Treasurer</h3>
+                            </div>
+                            <p class="advisor-description">Manages royal finances and increases gold generation by 50%</p>
+                            <div class="advisor-effects">
+                                <span class="effect">+50% Gold Generation</span>
+                            </div>
+                            <div class="advisor-cost">
+                                <span class="cost-item">💰 200 Gold</span>
+                                <span class="cost-item">✨ 15 Influence</span>
+                            </div>
+                            <button class="btn-recruit" onclick="recruitAdvisor('treasurer')">Recruit</button>
+                        </div>
+
+                        <!-- Diplomat -->
+                        <div class="advisor-card" data-advisor-type="diplomat">
+                            <div class="advisor-header">
+                                <span class="advisor-icon">🤝</span>
+                                <h3>Diplomat</h3>
+                            </div>
+                            <p class="advisor-description">Master of negotiations, generates 2 influence per second</p>
+                            <div class="advisor-effects">
+                                <span class="effect">+2 Influence/sec</span>
+                            </div>
+                            <div class="advisor-cost">
+                                <span class="cost-item">💰 100 Gold</span>
+                                <span class="cost-item">✨ 25 Influence</span>
+                            </div>
+                            <button class="btn-recruit" onclick="recruitAdvisor('diplomat')">Recruit</button>
+                        </div>
+
+                        <!-- General -->
+                        <div class="advisor-card" data-advisor-type="general">
+                            <div class="advisor-header">
+                                <span class="advisor-icon">⚔️</span>
+                                <h3>General</h3>
+                            </div>
+                            <p class="advisor-description">Commands your armies and increases military event frequency</p>
+                            <div class="advisor-effects">
+                                <span class="effect">+Military Events</span>
+                                <span class="effect">+10% Military Power</span>
+                            </div>
+                            <div class="advisor-cost">
+                                <span class="cost-item">💰 150 Gold</span>
+                                <span class="cost-item">✨ 10 Influence</span>
+                            </div>
+                            <button class="btn-recruit" onclick="recruitAdvisor('general')">Recruit</button>
+                        </div>
+
+                        <!-- Spymaster -->
+                        <div class="advisor-card" data-advisor-type="spymaster">
+                            <div class="advisor-header">
+                                <span class="advisor-icon">🕵️</span>
+                                <h3>Spymaster</h3>
+                            </div>
+                            <p class="advisor-description">Uncovers secrets and provides intelligence on faction activities</p>
+                            <div class="advisor-effects">
+                                <span class="effect">Reveals faction plots</span>
+                                <span class="effect">+5% Loyalty</span>
+                            </div>
+                            <div class="advisor-cost">
+                                <span class="cost-item">💰 150 Gold</span>
+                                <span class="cost-item">✨ 20 Influence</span>
+                            </div>
+                            <button class="btn-recruit" onclick="recruitAdvisor('spymaster')">Recruit</button>
+                        </div>
+
+                        <!-- Court Chaplain -->
+                        <div class="advisor-card" data-advisor-type="chaplain">
+                            <div class="advisor-header">
+                                <span class="advisor-icon">⛪</span>
+                                <h3>Court Chaplain</h3>
+                            </div>
+                            <p class="advisor-description">Spiritual guide who increases loyalty and happiness</p>
+                            <div class="advisor-effects">
+                                <span class="effect">+1 Loyalty/sec</span>
+                                <span class="effect">+Religious Events</span>
+                            </div>
+                            <div class="advisor-cost">
+                                <span class="cost-item">💰 100 Gold</span>
+                                <span class="cost-item">✨ 20 Influence</span>
+                            </div>
+                            <button class="btn-recruit" onclick="recruitAdvisor('chaplain')">Recruit</button>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Factions Panel -->
                 <section class="panel factions-panel">
                     <h2>Factions</h2>
@@ -102,11 +197,73 @@
         <!-- Footer -->
         <footer>
             <button id="calculate-tick" class="btn-secondary hidden">Force Resource Tick</button>
+            <button id="show-statistics" class="btn-secondary hidden" onclick="showStatistics()">View Statistics</button>
+            <button id="prestige-button" class="btn-primary hidden" onclick="showPrestigeModal()">Prestige</button>
             <div class="game-info">
                 <span>Kingdom: <span id="kingdom-display-name">-</span></span>
                 <span>Prestige Level: <span id="prestige-level">0</span></span>
             </div>
         </footer>
+    </div>
+
+    <!-- Statistics Modal -->
+    <div id="statistics-modal" class="modal hidden">
+        <div class="modal-content statistics-content">
+            <div class="modal-header">
+                <h2>Kingdom Statistics</h2>
+                <button class="close-btn" onclick="closeStatistics()">&times;</button>
+            </div>
+            <div class="statistics-container">
+                <!-- Overview Stats -->
+                <div class="stats-section">
+                    <h3>Overview</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-icon">⏱️</span>
+                            <span class="stat-label">Time Played</span>
+                            <span class="stat-value" id="stat-time-played">0:00:00</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-icon">💰</span>
+                            <span class="stat-label">Total Gold Generated</span>
+                            <span class="stat-value" id="stat-total-gold">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-icon">✨</span>
+                            <span class="stat-label">Total Influence Generated</span>
+                            <span class="stat-value" id="stat-total-influence">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-icon">📜</span>
+                            <span class="stat-label">Events Completed</span>
+                            <span class="stat-value" id="stat-events-completed">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="stats-section">
+                    <h3>Resource Growth</h3>
+                    <canvas id="resource-growth-chart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="stats-section">
+                    <h3>Faction Approval Trends</h3>
+                    <canvas id="faction-approval-chart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="stats-section">
+                    <h3>Resource Distribution</h3>
+                    <canvas id="resource-distribution-chart" width="300" height="300"></canvas>
+                </div>
+
+                <!-- Export Section -->
+                <div class="stats-section">
+                    <h3>Export Data</h3>
+                    <button class="btn-primary" onclick="exportStatistics()">Export as JSON</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Event Modal -->
@@ -120,6 +277,59 @@
         </div>
     </div>
 
+    <!-- Prestige Modal -->
+    <div id="prestige-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Prestige</h2>
+                <button class="close-btn" onclick="closePrestigeModal()">&times;</button>
+            </div>
+            <div class="prestige-info">
+                <p>Prestige resets your kingdom but grants permanent bonuses!</p>
+                
+                <div class="prestige-requirements">
+                    <h3>Requirements</h3>
+                    <p>Completed Events: <span id="prestige-events-count">0</span> / 10</p>
+                    <p id="prestige-requirement-status"></p>
+                </div>
+                
+                <div class="prestige-bonuses">
+                    <h3>Current Bonuses (Level <span id="modal-prestige-level">0</span>)</h3>
+                    <ul>
+                        <li>Resource Generation: +<span id="current-resource-bonus">0</span>%</li>
+                        <li>Extra Advisor Slots: <span id="current-advisor-slots">0</span></li>
+                        <li>Faction Relation Retention: <span id="current-faction-retention">0</span>%</li>
+                    </ul>
+                </div>
+                
+                <div class="prestige-next-bonuses">
+                    <h3>Next Level Bonuses (Level <span id="next-prestige-level">1</span>)</h3>
+                    <ul>
+                        <li>Resource Generation: +<span id="next-resource-bonus">10</span>%</li>
+                        <li>Extra Advisor Slots: <span id="next-advisor-slots">1</span></li>
+                        <li>Faction Relation Retention: <span id="next-faction-retention">10</span>%</li>
+                    </ul>
+                </div>
+                
+                <div class="prestige-warning">
+                    <p><strong>Warning:</strong> Prestiging will reset:</p>
+                    <ul>
+                        <li>All resources to starting values</li>
+                        <li>All advisors and characters</li>
+                        <li>Event progress</li>
+                        <li>Faction relations (partially retained based on level)</li>
+                    </ul>
+                </div>
+                
+                <div class="modal-actions">
+                    <button id="confirm-prestige" class="btn-primary" onclick="performPrestige()" disabled>Perform Prestige</button>
+                    <button class="btn-secondary" onclick="closePrestigeModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>

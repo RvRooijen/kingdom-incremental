@@ -69,6 +69,9 @@ export class MakeEventChoiceCommand {
       // Mark event as processed
       await this.eventRepository.markAsProcessed(input.eventId, input.kingdomId);
 
+      // Increment completed events count for prestige tracking
+      kingdom.incrementCompletedEvents();
+
       // Save kingdom state
       await this.kingdomRepository.save(kingdom);
       await this.unitOfWork.commit();

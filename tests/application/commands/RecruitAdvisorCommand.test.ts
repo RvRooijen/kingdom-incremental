@@ -2,6 +2,7 @@ import { RecruitAdvisorCommand } from '../../../src/application/commands/Recruit
 import { IKingdomRepository } from '../../../src/application/interfaces/IKingdomRepository';
 import { IUnitOfWork } from '../../../src/application/interfaces/IUnitOfWork';
 import { Kingdom } from '../../../src/domain/entities/Kingdom';
+import { ResourceType } from '../../../src/domain/value-objects/ResourceType';
 
 describe('RecruitAdvisorCommand', () => {
   let command: RecruitAdvisorCommand;
@@ -13,7 +14,8 @@ describe('RecruitAdvisorCommand', () => {
       findById: jest.fn(),
       save: jest.fn(),
       exists: jest.fn(),
-      findByName: jest.fn()
+      findByName: jest.fn(),
+      findAll: jest.fn()
     };
 
     mockUnitOfWork = {
@@ -39,16 +41,12 @@ describe('RecruitAdvisorCommand', () => {
 
       // Mock a kingdom with plenty of resources
       const richKingdom = new Kingdom('Rich Kingdom');
-      // Mock the resources getter to return high values
-      jest.spyOn(richKingdom, 'resources', 'get').mockReturnValue({
-        gold: 1000,
-        influence: 100,
-        loyalty: 50,
-        population: 1000,
-        militaryPower: 10,
-        add: jest.fn(),
-        subtract: jest.fn()
-      } as any);
+      // Add resources to the kingdom
+      richKingdom.addResource(ResourceType.GOLD, 1000);
+      richKingdom.addResource(ResourceType.INFLUENCE, 100);
+      
+      // Mock the getAdvisors to return an empty array
+      jest.spyOn(richKingdom, 'getAdvisors').mockReturnValue([]);
 
       mockKingdomRepository.findById.mockResolvedValue(richKingdom);
       mockKingdomRepository.save.mockResolvedValue(undefined);

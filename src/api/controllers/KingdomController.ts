@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { CreateKingdomCommand } from '../../application/commands/CreateKingdomCommand';
+import { RecruitAdvisorCommand } from '../../application/commands/RecruitAdvisorCommand';
 import { GetKingdomStateQuery } from '../../application/queries/GetKingdomStateQuery';
 import { IKingdomRepository } from '../../application/interfaces/IKingdomRepository';
 import { IUnitOfWork } from '../../application/interfaces/IUnitOfWork';
@@ -11,20 +12,44 @@ class MockKingdomRepository implements IKingdomRepository {
   private kingdoms = new Map<string, Kingdom>();
 
   async findById(id: string): Promise<Kingdom | null> {
-    return this.kingdoms.get(id) || null;
+    const stored = this.kingdoms.get(id);
+    if (!stored) return null;
+    
+    // Reconstruct the kingdom from stored data
+    const kingdom = new Kingdom(stored.name);
+    (kingdom as any).id = stored.id;
+    (kingdom as any).resources = stored.resources;
+    (kingdom as any).court = stored.court;
+    (kingdom as any).factions = new Map(stored.factions);
+    (kingdom as any).prestigeLevel = stored.prestigeLevel || 0;
+    (kingdom as any)._completedEventsCount = stored.completedEventsCount || 0;
+    
+    return kingdom;
   }
 
   async findByName(name: string): Promise<Kingdom | null> {
-    for (const kingdom of this.kingdoms.values()) {
-      if (kingdom.name === name) {
-        return kingdom;
+    for (const [id, stored] of this.kingdoms.entries()) {
+      if ((stored as any).name === name) {
+        return this.findById(id);
       }
     }
     return null;
   }
 
   async save(kingdom: Kingdom): Promise<void> {
-    this.kingdoms.set(kingdom.id, kingdom);
+    // Create a deep copy to preserve the state
+    const kingdomCopy = JSON.parse(JSON.stringify({
+      id: kingdom.id,
+      name: kingdom.name,
+      resources: kingdom.resources,
+      court: kingdom.court,
+      factions: Array.from(kingdom.factions.entries()),
+      prestigeLevel: kingdom.prestigeLevel || 0,
+      completedEventsCount: kingdom.completedEventsCount || 0
+    }));
+    
+    // Store the serialized version
+    this.kingdoms.set(kingdom.id, kingdomCopy as any);
   }
   
   async exists(id: string): Promise<boolean> {
@@ -32,7 +57,12 @@ class MockKingdomRepository implements IKingdomRepository {
   }
 
   async findAll(): Promise<Kingdom[]> {
-    return Array.from(this.kingdoms.values());
+    const kingdoms: Kingdom[] = [];
+    for (const id of this.kingdoms.keys()) {
+      const kingdom = await this.findById(id);
+      if (kingdom) kingdoms.push(kingdom);
+    }
+    return kingdoms;
   }
 }
 
@@ -53,6 +83,7 @@ class MockUnitOfWork implements IUnitOfWork {
 
 export class KingdomController {
   private createKingdomCommand: CreateKingdomCommand;
+  private recruitAdvisorCommand: RecruitAdvisorCommand;
   private getKingdomStateQuery: GetKingdomStateQuery;
   private kingdomRepository: IKingdomRepository;
   private unitOfWork: IUnitOfWork;
@@ -67,6 +98,7 @@ export class KingdomController {
       
     this.unitOfWork = new MockUnitOfWork();
     this.createKingdomCommand = new CreateKingdomCommand(this.kingdomRepository, this.unitOfWork);
+    this.recruitAdvisorCommand = new RecruitAdvisorCommand(this.kingdomRepository, this.unitOfWork);
     this.getKingdomStateQuery = new GetKingdomStateQuery(this.kingdomRepository);
     
     console.log(`Using ${useVercelKV ? 'Vercel KV' : 'Mock'} repository`);
@@ -147,6 +179,91 @@ export class KingdomController {
       // Return the updated state
       const updatedState = await this.getKingdomStateQuery.execute(id);
       res.json(updatedState);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  recruitAdvisor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { advisorName, specialty } = req.body;
+      
+      if (!id) {
+        res.status(400).json({ error: 'Kingdom ID is required' });
+        return;
+      }
+      
+      if (!advisorName || !specialty) {
+        res.status(400).json({ error: 'Advisor name and specialty are required' });
+        return;
+      }
+      
+      const result = await this.recruitAdvisorCommand.execute({
+        kingdomId: id,
+        advisorName,
+        specialty
+      });
+      
+      if (!result.success) {
+        res.status(400).json({
+          success: false,
+          message: result.message,
+          cost: result.cost
+        });
+        return;
+      }
+      
+      res.json(result);
+    } catch (error: any) {
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+      if (error.message.includes('Invalid') || error.message.includes('required')) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  };
+
+  performPrestige = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        res.status(400).json({ error: 'Kingdom ID is required' });
+        return;
+      }
+      
+      // Load the domain entity
+      const kingdom = await this.kingdomRepository.findById(id);
+      if (!kingdom) {
+        res.status(404).json({ error: 'Kingdom not found' });
+        return;
+      }
+      
+      // Perform prestige
+      const result = kingdom.performPrestige();
+      
+      if (!result.success) {
+        res.status(400).json({ 
+          success: false, 
+          message: result.error 
+        });
+        return;
+      }
+      
+      // Save the updated kingdom
+      await this.kingdomRepository.save(kingdom);
+      
+      // Return the result
+      res.json({
+        success: true,
+        prestigeLevel: result.newPrestigeLevel,
+        bonuses: result.bonuses
+      });
     } catch (error) {
       next(error);
     }

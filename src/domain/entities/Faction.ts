@@ -29,6 +29,11 @@ export class Faction {
     this.updateMood();
   }
 
+  setApprovalRating(rating: number): void {
+    this._approvalRating = Math.max(0, Math.min(100, rating));
+    this.updateMood();
+  }
+
   private updateMood(): void {
     if (this._approvalRating <= 20) {
       this._mood = 'Hostile';

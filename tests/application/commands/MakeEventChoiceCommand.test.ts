@@ -16,14 +16,19 @@ describe('MakeEventChoiceCommand', () => {
       findById: jest.fn(),
       save: jest.fn(),
       exists: jest.fn(),
-      findByName: jest.fn()
+      findByName: jest.fn(),
+      findAll: jest.fn()
     };
 
     mockEventRepository = {
       findActiveEvents: jest.fn(),
       findById: jest.fn(),
       save: jest.fn(),
-      markAsProcessed: jest.fn()
+      markAsProcessed: jest.fn(),
+      findByChainId: jest.fn(),
+      saveChainChoice: jest.fn(),
+      getChainChoices: jest.fn(),
+      isChainComplete: jest.fn()
     };
 
     mockUnitOfWork = {

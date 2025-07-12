@@ -36,6 +36,8 @@ export const createApp = (): Application => {
   app.get('/api/kingdoms/:id', kingdomController.getKingdom);
   app.post('/api/kingdoms', kingdomController.createKingdom);
   app.put('/api/kingdoms/:id/calculate', kingdomController.calculateTick);
+  app.post('/api/kingdoms/:id/advisors', kingdomController.recruitAdvisor);
+  app.post('/api/kingdoms/:id/prestige', kingdomController.performPrestige);
 
   // Event routes
   app.get('/api/kingdoms/:id/events', eventController.getEvents);

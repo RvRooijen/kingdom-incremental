@@ -2,7 +2,17 @@
 let gameState = {
     kingdomId: null,
     kingdom: null,
-    updateInterval: null
+    updateInterval: null,
+    statistics: {
+        startTime: null,
+        totalGoldGenerated: 0,
+        totalInfluenceGenerated: 0,
+        eventsCompleted: 0,
+        resourceHistory: [],
+        factionHistory: {},
+        lastUpdate: Date.now()
+    },
+    charts: {}
 };
 
 // API base URL
@@ -45,6 +55,9 @@ const elements = {
 
 // Initialize game
 async function init() {
+    // Initialize statistics
+    initializeStatistics();
+    
     // Check if we have a saved kingdom ID
     const savedKingdomId = localStorage.getItem('kingdomId');
     if (savedKingdomId) {
@@ -121,6 +134,8 @@ function showGameScreen() {
     elements.startScreen.classList.add('hidden');
     elements.gameScreen.classList.remove('hidden');
     elements.calculateTickBtn.classList.remove('hidden');
+    document.getElementById('show-statistics').classList.remove('hidden');
+    updatePrestigeButton();
 }
 
 // Update kingdom display
@@ -135,12 +150,6 @@ function updateKingdomDisplay() {
     elements.population.textContent = kingdom.resources.population;
     elements.militaryPower.textContent = Math.floor(kingdom.resources.militaryPower);
     
-    // Generation rates
-    if (kingdom.generationRates) {
-        elements.goldRate.textContent = kingdom.generationRates.gold || 0;
-        elements.influenceRate.textContent = kingdom.generationRates.influence || 0;
-    }
-    
     // Court
     elements.kingName.textContent = kingdom.court.king.name;
     elements.queenName.textContent = kingdom.court.queen.name;
@@ -148,12 +157,18 @@ function updateKingdomDisplay() {
     // Advisors
     updateAdvisors(kingdom.court.advisors);
     
+    // Update generation rates with advisor bonuses
+    updateGenerationRates();
+    
     // Factions
     updateFactions(kingdom.factions);
     
     // Info
     elements.kingdomDisplayName.textContent = kingdom.name;
     elements.prestigeLevel.textContent = kingdom.prestigeLevel || 0;
+    
+    // Update advisor affordability
+    updateAdvisorAffordability();
 }
 
 // Update advisors display
@@ -163,12 +178,35 @@ function updateAdvisors(advisors) {
         return;
     }
     
-    elements.advisors.innerHTML = advisors.map(advisor => `
-        <div class="advisor">
-            <span class="advisor-icon">🎓</span>
-            <span>${advisor.name} (${advisor.type})</span>
-        </div>
-    `).join('');
+    elements.advisors.innerHTML = advisors.map(advisor => {
+        const icon = getAdvisorIcon(advisor.type);
+        return `
+            <div class="advisor">
+                <span class="advisor-icon">${icon}</span>
+                <span>${advisor.name} (${advisor.type})</span>
+            </div>
+        `;
+    }).join('');
+    
+    // Update recruited advisors in recruitment panel
+    updateRecruitmentPanel();
+}
+
+// Get advisor icon based on type
+function getAdvisorIcon(type) {
+    const icons = {
+        'TREASURER': '💰',
+        'CHANCELLOR': '🤝',
+        'MARSHAL': '⚔️',
+        'SPYMASTER': '🕵️',
+        'COURT_CHAPLAIN': '⛪',
+        'Economic': '💰',
+        'Diplomatic': '🤝',
+        'Military': '⚔️',
+        'Religious': '⛪',
+        'Administrative': '📜'
+    };
+    return icons[type] || '🎓';
 }
 
 // Update factions display
@@ -306,6 +344,10 @@ async function makeChoice(eventId, choiceId) {
         // Close modal
         elements.eventModal.classList.add('hidden');
         
+        // Update statistics
+        gameState.statistics.eventsCompleted++;
+        saveStatistics();
+        
         // Reload kingdom and events
         await loadKingdom();
         await loadEvents();
@@ -351,6 +393,9 @@ function startUpdateLoop() {
             updateKingdomDisplay();
         }
         
+        // Update statistics
+        updateStatistics();
+        
         // Sync with server every 10 seconds
         if (Date.now() % 10000 < 1000) {
             await calculateTick();
@@ -370,7 +415,595 @@ window.onclick = function(event) {
     if (event.target === elements.eventModal) {
         elements.eventModal.classList.add('hidden');
     }
+    if (event.target === document.getElementById('statistics-modal')) {
+        document.getElementById('statistics-modal').classList.add('hidden');
+    }
 }
 
 // Initialize on load
 window.addEventListener('DOMContentLoaded', init);
+
+// Recruit advisor
+async function recruitAdvisor(advisorType) {
+    try {
+        // Map frontend advisor types to backend types
+        const typeMapping = {
+            'treasurer': { type: 'TREASURER', specialty: 'Economic', name: 'Royal Treasurer' },
+            'diplomat': { type: 'CHANCELLOR', specialty: 'Diplomatic', name: 'Chancellor' },
+            'general': { type: 'MARSHAL', specialty: 'Military', name: 'Marshal' },
+            'spymaster': { type: 'SPYMASTER', specialty: 'Administrative', name: 'Spymaster' },
+            'chaplain': { type: 'COURT_CHAPLAIN', specialty: 'Religious', name: 'Court Chaplain' }
+        };
+        
+        const advisorData = typeMapping[advisorType];
+        if (!advisorData) {
+            updateStatus('Invalid advisor type', 'error');
+            return;
+        }
+        
+        // Check if already recruited
+        if (gameState.kingdom && gameState.kingdom.court.advisors) {
+            const alreadyRecruited = gameState.kingdom.court.advisors.some(
+                advisor => advisor.type === advisorData.type
+            );
+            if (alreadyRecruited) {
+                updateStatus('This advisor position is already filled', 'error');
+                return;
+            }
+        }
+        
+        updateStatus('Recruiting advisor...');
+        
+        const response = await fetch(`${API_BASE}/kingdoms/${gameState.kingdomId}/advisors`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                advisorName: advisorData.name,
+                specialty: advisorData.specialty,
+                advisorType: advisorData.type
+            })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to recruit advisor');
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            updateStatus(result.message || 'Failed to recruit advisor', 'error');
+            return;
+        }
+        
+        // Reload kingdom to get updated state
+        await loadKingdom();
+        
+        updateStatus(`Successfully recruited ${advisorData.name}!`);
+        
+        // Show visual feedback
+        const card = document.querySelector(`[data-advisor-type="${advisorType}"]`);
+        if (card) {
+            card.classList.add('recruited');
+            const button = card.querySelector('.btn-recruit');
+            if (button) {
+                button.textContent = 'Recruited';
+                button.disabled = true;
+            }
+        }
+    } catch (error) {
+        updateStatus('Error: ' + error.message, 'error');
+    }
+}
+
+// Update recruitment panel to show already recruited advisors
+function updateRecruitmentPanel() {
+    if (!gameState.kingdom || !gameState.kingdom.court.advisors) return;
+    
+    const recruitedTypes = gameState.kingdom.court.advisors.map(advisor => {
+        // Map backend types to frontend types
+        const typeMap = {
+            'TREASURER': 'treasurer',
+            'CHANCELLOR': 'diplomat',
+            'MARSHAL': 'general',
+            'SPYMASTER': 'spymaster',
+            'COURT_CHAPLAIN': 'chaplain'
+        };
+        return typeMap[advisor.type] || advisor.type.toLowerCase();
+    });
+    
+    // Update UI for recruited advisors
+    recruitedTypes.forEach(type => {
+        const card = document.querySelector(`[data-advisor-type="${type}"]`);
+        if (card) {
+            card.classList.add('recruited');
+            const button = card.querySelector('.btn-recruit');
+            if (button) {
+                button.textContent = 'Recruited';
+                button.disabled = true;
+            }
+        }
+    });
+    
+    // Update UI for locked advisors (insufficient resources)
+    updateAdvisorAffordability();
+}
+
+// Update advisor cards based on affordability
+function updateAdvisorAffordability() {
+    if (!gameState.kingdom) return;
+    
+    const costs = {
+        'treasurer': { gold: 200, influence: 15 },
+        'diplomat': { gold: 100, influence: 25 },
+        'general': { gold: 150, influence: 10 },
+        'spymaster': { gold: 150, influence: 20 },
+        'chaplain': { gold: 100, influence: 20 }
+    };
+    
+    Object.entries(costs).forEach(([type, cost]) => {
+        const card = document.querySelector(`[data-advisor-type="${type}"]`);
+        if (!card || card.classList.contains('recruited')) return;
+        
+        const canAfford = gameState.kingdom.resources.gold >= cost.gold && 
+                         gameState.kingdom.resources.influence >= cost.influence;
+        
+        if (canAfford) {
+            card.classList.remove('locked');
+            const button = card.querySelector('.btn-recruit');
+            if (button) button.disabled = false;
+        } else {
+            card.classList.add('locked');
+            const button = card.querySelector('.btn-recruit');
+            if (button) button.disabled = true;
+        }
+    });
+}
+
+// Update generation rates display with advisor bonuses
+function updateGenerationRates() {
+    if (!gameState.kingdom) return;
+    
+    let goldRate = 1; // Base rate
+    let influenceRate = 0.5; // Base rate
+    let loyaltyRate = 0; // Base rate
+    
+    // Apply advisor bonuses
+    if (gameState.kingdom.court.advisors) {
+        gameState.kingdom.court.advisors.forEach(advisor => {
+            switch (advisor.type) {
+                case 'TREASURER':
+                case 'Economic':
+                    goldRate *= 1.5; // +50% gold generation
+                    break;
+                case 'CHANCELLOR':
+                case 'Diplomatic':
+                    influenceRate += 2; // +2 influence per second
+                    break;
+                case 'COURT_CHAPLAIN':
+                case 'Religious':
+                    loyaltyRate += 1; // +1 loyalty per second
+                    break;
+            }
+        });
+    }
+    
+    // Update display
+    elements.goldRate.textContent = goldRate.toFixed(1);
+    elements.influenceRate.textContent = influenceRate.toFixed(1);
+    
+    // Store rates for local updates
+    gameState.kingdom.generationRates = {
+        gold: goldRate,
+        influence: influenceRate,
+        loyalty: loyaltyRate
+    };
+}
+
+    const saved = localStorage.getItem('kingdomStatistics');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            gameState.statistics = { ...gameState.statistics, ...parsed };
+        } catch (e) {
+            console.error('Failed to load statistics:', e);
+        }
+    }
+    
+    // Set start time if not set
+    if (!gameState.statistics.startTime) {
+        gameState.statistics.startTime = Date.now();
+        saveStatistics();
+    }
+}
+
+function saveStatistics() {
+    localStorage.setItem('kingdomStatistics', JSON.stringify(gameState.statistics));
+}
+
+function updateStatistics() {
+    if (!gameState.kingdom) return;
+    
+    const now = Date.now();
+    const timeDelta = (now - gameState.statistics.lastUpdate) / 1000; // in seconds
+    
+    // Update total resources generated
+    if (gameState.kingdom.generationRates) {
+        gameState.statistics.totalGoldGenerated += (gameState.kingdom.generationRates.gold || 0) * timeDelta;
+        gameState.statistics.totalInfluenceGenerated += (gameState.kingdom.generationRates.influence || 0) * timeDelta;
+    }
+    
+    // Record resource snapshot every 10 seconds
+    if (now - gameState.statistics.lastUpdate > 10000) {
+        const snapshot = {
+            timestamp: now,
+            gold: gameState.kingdom.resources.gold,
+            influence: gameState.kingdom.resources.influence,
+            loyalty: gameState.kingdom.resources.loyalty,
+            population: gameState.kingdom.resources.population,
+            militaryPower: gameState.kingdom.resources.militaryPower
+        };
+        
+        gameState.statistics.resourceHistory.push(snapshot);
+        
+        // Keep only last 100 snapshots
+        if (gameState.statistics.resourceHistory.length > 100) {
+            gameState.statistics.resourceHistory.shift();
+        }
+        
+        // Record faction approval
+        gameState.kingdom.factions.forEach(faction => {
+            if (!gameState.statistics.factionHistory[faction.name]) {
+                gameState.statistics.factionHistory[faction.name] = [];
+            }
+            gameState.statistics.factionHistory[faction.name].push({
+                timestamp: now,
+                approval: faction.approvalRating
+            });
+            
+            // Keep only last 50 entries per faction
+            if (gameState.statistics.factionHistory[faction.name].length > 50) {
+                gameState.statistics.factionHistory[faction.name].shift();
+            }
+        });
+        
+        gameState.statistics.lastUpdate = now;
+        saveStatistics();
+    }
+}
+
+function calculateStatistics() {
+    const stats = gameState.statistics;
+    
+    // Calculate time played
+    const timePlayed = Date.now() - stats.startTime;
+    const hours = Math.floor(timePlayed / 3600000);
+    const minutes = Math.floor((timePlayed % 3600000) / 60000);
+    const seconds = Math.floor((timePlayed % 60000) / 1000);
+    
+    return {
+        timePlayed: `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
+        totalGold: Math.floor(stats.totalGoldGenerated),
+        totalInfluence: Math.floor(stats.totalInfluenceGenerated),
+        eventsCompleted: stats.eventsCompleted
+    };
+}
+
+function showStatistics() {
+    const modal = document.getElementById('statistics-modal');
+    const stats = calculateStatistics();
+    
+    // Update overview stats
+    document.getElementById('stat-time-played').textContent = stats.timePlayed;
+    document.getElementById('stat-total-gold').textContent = stats.totalGold.toLocaleString();
+    document.getElementById('stat-total-influence').textContent = stats.totalInfluence.toLocaleString();
+    document.getElementById('stat-events-completed').textContent = stats.eventsCompleted;
+    
+    // Create/update charts
+    createResourceGrowthChart();
+    createFactionApprovalChart();
+    createResourceDistributionChart();
+    
+    modal.classList.remove('hidden');
+}
+
+function closeStatistics() {
+    document.getElementById('statistics-modal').classList.add('hidden');
+}
+
+function createResourceGrowthChart() {
+    const ctx = document.getElementById('resource-growth-chart').getContext('2d');
+    const history = gameState.statistics.resourceHistory;
+    
+    if (gameState.charts.resourceGrowth) {
+        gameState.charts.resourceGrowth.destroy();
+    }
+    
+    const data = {
+        labels: history.map(h => new Date(h.timestamp).toLocaleTimeString()),
+        datasets: [
+            {
+                label: 'Gold',
+                data: history.map(h => h.gold),
+                borderColor: '#f39c12',
+                backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                tension: 0.1
+            },
+            {
+                label: 'Influence',
+                data: history.map(h => h.influence),
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.1
+            }
+        ]
+    };
+    
+    gameState.charts.resourceGrowth = new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#eee'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#eee',
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#eee'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createFactionApprovalChart() {
+    const ctx = document.getElementById('faction-approval-chart').getContext('2d');
+    const factionHistory = gameState.statistics.factionHistory;
+    
+    if (gameState.charts.factionApproval) {
+        gameState.charts.factionApproval.destroy();
+    }
+    
+    const datasets = [];
+    const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6'];
+    let colorIndex = 0;
+    
+    for (const [factionName, history] of Object.entries(factionHistory)) {
+        if (history.length > 0) {
+            datasets.push({
+                label: factionName,
+                data: history.map(h => h.approval),
+                borderColor: colors[colorIndex % colors.length],
+                backgroundColor: `${colors[colorIndex % colors.length]}20`,
+                tension: 0.1
+            });
+            colorIndex++;
+        }
+    }
+    
+    gameState.charts.factionApproval = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: factionHistory[Object.keys(factionHistory)[0]]?.map(h => 
+                new Date(h.timestamp).toLocaleTimeString()
+            ) || [],
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#eee'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#eee',
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        color: '#eee'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createResourceDistributionChart() {
+    const ctx = document.getElementById('resource-distribution-chart').getContext('2d');
+    
+    if (gameState.charts.resourceDistribution) {
+        gameState.charts.resourceDistribution.destroy();
+    }
+    
+    if (!gameState.kingdom) return;
+    
+    const resources = gameState.kingdom.resources;
+    const data = {
+        labels: ['Gold', 'Influence', 'Loyalty', 'Population', 'Military Power'],
+        datasets: [{
+            data: [
+                resources.gold,
+                resources.influence,
+                resources.loyalty,
+                resources.population,
+                resources.militaryPower
+            ],
+            backgroundColor: [
+                '#f39c12',
+                '#3498db',
+                '#e74c3c',
+                '#2ecc71',
+                '#9b59b6'
+            ]
+        }]
+    };
+    
+    gameState.charts.resourceDistribution = new Chart(ctx, {
+        type: 'pie',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#eee'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function exportStatistics() {
+    const exportData = {
+        kingdom: {
+            name: gameState.kingdom?.name,
+            id: gameState.kingdomId
+        },
+        statistics: gameState.statistics,
+        currentResources: gameState.kingdom?.resources,
+        currentFactions: gameState.kingdom?.factions,
+        exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `kingdom-stats-${Date.now()}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+
+// Prestige System Functions
+function showPrestigeModal() {
+    updatePrestigeModal();
+    document.getElementById('prestige-modal').classList.remove('hidden');
+}
+
+function closePrestigeModal() {
+    document.getElementById('prestige-modal').classList.add('hidden');
+}
+
+async function updatePrestigeModal() {
+    if (!gameState.kingdom) return;
+
+    const kingdom = gameState.kingdom;
+    const completedEvents = kingdom.completedEventsCount || gameState.statistics.eventsCompleted || 0;
+    const canPrestige = completedEvents >= 10;
+    
+    // Update requirements
+    document.getElementById('prestige-events-count').textContent = completedEvents;
+    const requirementStatus = document.getElementById('prestige-requirement-status');
+    
+    if (canPrestige) {
+        requirementStatus.textContent = 'You can prestige!';
+        requirementStatus.style.color = '#4CAF50';
+        document.getElementById('confirm-prestige').disabled = false;
+    } else {
+        requirementStatus.textContent = `Need ${10 - completedEvents} more events`;
+        requirementStatus.style.color = '#f44336';
+        document.getElementById('confirm-prestige').disabled = true;
+    }
+    
+    // Current prestige level
+    const currentLevel = kingdom.prestigeLevel || 0;
+    document.getElementById('modal-prestige-level').textContent = currentLevel;
+    document.getElementById('prestige-level').textContent = currentLevel;
+    
+    // Current bonuses
+    document.getElementById('current-resource-bonus').textContent = currentLevel * 10;
+    document.getElementById('current-advisor-slots').textContent = currentLevel;
+    document.getElementById('current-faction-retention').textContent = Math.min(currentLevel * 10, 90);
+    
+    // Next level bonuses
+    const nextLevel = currentLevel + 1;
+    document.getElementById('next-prestige-level').textContent = nextLevel;
+    document.getElementById('next-resource-bonus').textContent = nextLevel * 10;
+    document.getElementById('next-advisor-slots').textContent = nextLevel;
+    document.getElementById('next-faction-retention').textContent = Math.min(nextLevel * 10, 90);
+}
+
+async function performPrestige() {
+    if (!gameState.kingdomId) return;
+    
+    const confirmMsg = 'Are you sure you want to prestige? This will reset most of your progress but grant permanent bonuses.';
+    if (!confirm(confirmMsg)) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/kingdoms/${gameState.kingdomId}/prestige`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to prestige');
+        }
+        
+        const result = await response.json();
+        
+        // Close modal
+        closePrestigeModal();
+        
+        // Show success message
+        showStatus(`Prestige successful! You are now prestige level ${result.prestigeLevel}`, 'success');
+        
+        // Reload kingdom state
+        await loadKingdom();
+        
+    } catch (error) {
+        console.error('Prestige error:', error);
+        showStatus(error.message || 'Failed to perform prestige', 'error');
+    }
+}
+
+// Update the prestige button visibility
+function updatePrestigeButton() {
+    const prestigeButton = document.getElementById('prestige-button');
+    if (gameState.kingdom && prestigeButton) {
+        prestigeButton.classList.remove('hidden');
+    }
+}

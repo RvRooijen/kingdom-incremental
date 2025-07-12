@@ -58,21 +58,33 @@ export class EventConsequence {
 }
 
 export class EventChoice {
+  public readonly id: string;
   public readonly description: string;
   public readonly requirements: ResourceRequirement;
   public readonly immediateEffect: EventConsequence;
   public readonly longTermEffects: EventConsequence[];
+  public readonly chainData?: {
+    nextEventModifier?: string;
+    unlockConditions?: string[];
+  };
 
   constructor(params: {
+    id: string;
     description: string;
     requirements: ResourceRequirement;
     immediateEffect: EventConsequence;
     longTermEffects: EventConsequence[];
+    chainData?: {
+      nextEventModifier?: string;
+      unlockConditions?: string[];
+    };
   }) {
+    this.id = params.id;
     this.description = params.description;
     this.requirements = params.requirements;
     this.immediateEffect = params.immediateEffect;
     this.longTermEffects = params.longTermEffects;
+    this.chainData = params.chainData;
   }
 
   canBeChosen(availableResources: Resources): boolean {
@@ -87,6 +99,11 @@ export abstract class Event {
   public readonly type: EventType;
   public readonly choices: EventChoice[];
   public readonly expiresAt: Date | undefined;
+  public nextEventId: string = '';
+  public previousEventId: string = '';
+  public chainId: string = '';
+  public chainPosition: number = 0;
+  public chainLength: number = 0;
 
   constructor(
     id: string,
@@ -94,7 +111,14 @@ export abstract class Event {
     description: string,
     type: EventType,
     choices: EventChoice[],
-    expiresAt?: Date
+    expiresAt?: Date,
+    chainData?: {
+      nextEventId?: string;
+      previousEventId?: string;
+      chainId?: string;
+      chainPosition?: number;
+      chainLength?: number;
+    }
   ) {
     this.id = id;
     this.title = title;
@@ -102,6 +126,14 @@ export abstract class Event {
     this.type = type;
     this.choices = choices;
     this.expiresAt = expiresAt;
+    
+    if (chainData) {
+      this.nextEventId = chainData.nextEventId || '';
+      this.previousEventId = chainData.previousEventId || '';
+      this.chainId = chainData.chainId || '';
+      this.chainPosition = chainData.chainPosition || 0;
+      this.chainLength = chainData.chainLength || 0;
+    }
   }
 
   isExpired(): boolean {
@@ -113,5 +145,24 @@ export abstract class Event {
 
   getAvailableChoices(availableResources: Resources): EventChoice[] {
     return this.choices.filter(choice => choice.canBeChosen(availableResources));
+  }
+
+  isPartOfChain(): boolean {
+    return this.chainId !== undefined;
+  }
+
+  isChainStart(): boolean {
+    return this.isPartOfChain() && this.previousEventId === undefined;
+  }
+
+  isChainEnd(): boolean {
+    return this.isPartOfChain() && this.nextEventId === undefined;
+  }
+
+  getChainProgress(): string {
+    if (!this.isPartOfChain() || !this.chainPosition || !this.chainLength) {
+      return '';
+    }
+    return `${this.chainPosition}/${this.chainLength}`;
   }
 }

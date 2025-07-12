@@ -472,6 +472,148 @@ footer {
     }
 }
 
+/* Advisor Recruitment */
+.advisor-recruitment-panel {
+    grid-column: span 2;
+}
+
+.recruitment-info {
+    color: #bdc3c7;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.available-advisors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.advisor-card {
+    background-color: #0f3460;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.advisor-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 0%, rgba(243, 156, 18, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.advisor-card:hover {
+    border-color: #f39c12;
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(243, 156, 18, 0.3);
+}
+
+.advisor-card:hover::before {
+    opacity: 1;
+}
+
+.advisor-card.recruited {
+    opacity: 0.6;
+    border-color: #2ecc71;
+}
+
+.advisor-card.recruited .btn-recruit {
+    background-color: #2ecc71;
+    cursor: default;
+}
+
+.advisor-card.locked {
+    opacity: 0.5;
+}
+
+.advisor-card.locked .btn-recruit:disabled {
+    background-color: #7f8c8d;
+    cursor: not-allowed;
+}
+
+.advisor-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.advisor-header h3 {
+    color: #f39c12;
+    margin: 0;
+    font-size: 1.3em;
+}
+
+.advisor-icon {
+    font-size: 2.5em;
+    background-color: #1a1a2e;
+    padding: 10px;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.advisor-description {
+    color: #bdc3c7;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.advisor-effects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.effect {
+    background-color: #16213e;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    color: #3498db;
+    border: 1px solid #3498db;
+}
+
+.advisor-cost {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+}
+
+.cost-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: bold;
+}
+
+.btn-recruit {
+    width: 100%;
+    background-color: #f39c12;
+    position: relative;
+    z-index: 1;
+}
+
+.btn-recruit:hover:not(:disabled) {
+    background-color: #e67e22;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     #game-screen {
@@ -480,6 +622,14 @@ footer {
     
     .court-members {
         flex-direction: column;
+    }
+    
+    .advisor-recruitment-panel {
+        grid-column: span 1;
+    }
+    
+    .available-advisors {
+        grid-template-columns: 1fr;
     }
     
     footer {
@@ -491,5 +641,182 @@ footer {
     .game-info {
         flex-direction: column;
         gap: 10px;
+    }
+}
+
+/* Prestige Modal */
+.prestige-info {
+    padding: 20px;
+}
+
+.prestige-requirements, 
+.prestige-bonuses, 
+.prestige-next-bonuses,
+.prestige-warning {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+}
+
+.prestige-requirements h3,
+.prestige-bonuses h3,
+.prestige-next-bonuses h3,
+.prestige-warning strong {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.prestige-requirements p {
+    margin: 5px 0;
+}
+
+#prestige-requirement-status {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.prestige-bonuses ul,
+.prestige-next-bonuses ul,
+.prestige-warning ul {
+    list-style-type: disc;
+    margin-left: 20px;
+    margin-top: 10px;
+}
+
+.prestige-bonuses li,
+.prestige-next-bonuses li,
+.prestige-warning li {
+    margin: 5px 0;
+}
+
+.prestige-warning {
+    background-color: #ffe5e5;
+    border: 1px solid #ffcccc;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.btn-primary {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #45a049;
+}
+
+.btn-primary:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Statistics Modal */
+.statistics-content {
+    max-width: 900px;
+    width: 90vw;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: #eee;
+    font-size: 2em;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    color: #f39c12;
+    transform: none;
+}
+
+.statistics-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.stats-section {
+    background-color: #0f3460;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.stats-section h3 {
+    color: #3498db;
+    margin-bottom: 15px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.stat-card {
+    background-color: #1a1a2e;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+}
+
+.stat-icon {
+    font-size: 2em;
+}
+
+.stat-label {
+    color: #bdc3c7;
+    font-size: 0.9em;
+}
+
+.stat-value {
+    color: #f39c12;
+    font-size: 1.4em;
+    font-weight: bold;
+}
+
+/* Charts */
+canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* Statistics Responsive */
+@media (max-width: 768px) {
+    .statistics-content {
+        width: 95vw;
+        padding: 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
 }

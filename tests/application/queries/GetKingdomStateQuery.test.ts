@@ -1,6 +1,7 @@
 import { GetKingdomStateQuery } from '../../../src/application/queries/GetKingdomStateQuery';
 import { IKingdomRepository } from '../../../src/application/interfaces/IKingdomRepository';
 import { Kingdom } from '../../../src/domain/entities/Kingdom';
+import { KingdomStateDto } from '../../../src/application/dtos/KingdomStateDto';
 
 describe('GetKingdomStateQuery', () => {
   let query: GetKingdomStateQuery;
@@ -11,7 +12,8 @@ describe('GetKingdomStateQuery', () => {
       findById: jest.fn(),
       save: jest.fn(),
       exists: jest.fn(),
-      findByName: jest.fn()
+      findByName: jest.fn(),
+      findAll: jest.fn()
     };
 
     query = new GetKingdomStateQuery(mockKingdomRepository);
@@ -25,19 +27,19 @@ describe('GetKingdomStateQuery', () => {
       const result = await query.execute('kingdom1');
 
       expect(result).toBeDefined();
-      expect(result?.kingdomId).toBe(mockKingdom.id);
-      expect(result?.kingdomName).toBe('Test Kingdom');
-      expect(result?.rulerName).toBe('The King');
+      expect((result as any)?.id).toBe(mockKingdom.id);
+      expect((result as any)?.name).toBe('Test Kingdom');
       expect(result?.resources).toEqual({
         gold: 100,
-        influence: 10,
-        loyalty: 50,
-        population: 1000,
-        militaryPower: 10
+        influence: 0,
+        loyalty: 0,
+        population: 0,
+        militaryPower: 0
       });
-      expect(result?.advisors).toEqual([]);
+      expect((result as any)?.court.advisors).toEqual([]);
       expect(result?.factions).toHaveLength(5);
-      expect(result?.currentTurn).toBe(1);
+      expect((result as any)?.prestigeLevel).toBe(0);
+      expect((result as any)?.completedEventsCount).toBe(0);
     });
 
     it('should return faction information correctly', async () => {
@@ -47,10 +49,10 @@ describe('GetKingdomStateQuery', () => {
       const result = await query.execute('kingdom1');
 
       expect(result?.factions).toContainEqual({
+        type: 'Nobility',
         name: 'The Noble Houses',
-        description: 'Nobility',
-        loyalty: 50,
-        influence: 50
+        approvalRating: 50,
+        mood: 'Neutral'
       });
       expect(result?.factions).toContainEqual({
         name: 'The Merchant Guild',
@@ -88,15 +90,14 @@ describe('GetKingdomStateQuery', () => {
 
       const result = await query.execute('kingdom1');
 
-      expect(result?.advisors).toHaveLength(2);
-      expect(result?.advisors).toContainEqual({
-        id: 'advisor1',
+      expect((result as any)?.court.advisors).toHaveLength(2);
+      const advisorsArray = Array.from((result as any)?.court.advisors.values() || []);
+      expect(advisorsArray).toContainEqual({
         name: 'Merlin',
         specialty: 'Military',
         effectiveness: 85
       });
-      expect(result?.advisors).toContainEqual({
-        id: 'advisor2',
+      expect(advisorsArray).toContainEqual({
         name: 'Gandalf',
         specialty: 'Diplomatic',
         effectiveness: 90

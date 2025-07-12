@@ -1,6 +1,7 @@
 import { RecruitAdvisorInputDto, RecruitAdvisorOutputDto } from '../dtos/RecruitAdvisorDto';
 import { IKingdomRepository } from '../interfaces/IKingdomRepository';
 import { IUnitOfWork } from '../interfaces/IUnitOfWork';
+import { ResourceType } from '../../domain/value-objects/ResourceType';
 
 export class RecruitAdvisorCommand {
   constructor(
@@ -48,7 +49,7 @@ export class RecruitAdvisorCommand {
       const cost = costs[input.specialty];
 
       // Check if kingdom has enough resources
-      if (kingdom.resources.gold < cost.gold) {
+      if (kingdom.getResource(ResourceType.GOLD) < cost.gold) {
         return {
           success: false,
           cost,
@@ -56,7 +57,7 @@ export class RecruitAdvisorCommand {
         };
       }
 
-      if (kingdom.resources.influence < cost.influence) {
+      if (kingdom.getResource(ResourceType.INFLUENCE) < cost.influence) {
         return {
           success: false,
           cost,
@@ -65,7 +66,7 @@ export class RecruitAdvisorCommand {
       }
 
       // Check if court has space (assuming max 5 advisors)
-      const currentAdvisorCount = kingdom.court.advisors.size;
+      const currentAdvisorCount = kingdom.getAdvisors().length;
       if (currentAdvisorCount >= 5) {
         return {
           success: false,
@@ -78,10 +79,22 @@ export class RecruitAdvisorCommand {
       const advisorId = `advisor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const effectiveness = Math.floor(Math.random() * 30) + 70; // 70-100
 
-      // In a real implementation, we would:
-      // 1. Deduct resources from kingdom
-      // 2. Add advisor to royal court
-      // 3. Save the kingdom
+      // Deduct resources from kingdom
+      kingdom.addResource(ResourceType.GOLD, -cost.gold);
+      kingdom.addResource(ResourceType.INFLUENCE, -cost.influence);
+      
+      // Add advisor to kingdom
+      // Map specialty to AdvisorType
+      const advisorTypeMap: { [key: string]: any } = {
+        'treasurer': 'TREASURER',
+        'spymaster': 'SPYMASTER',
+        'chaplain': 'CHAPLAIN'
+      };
+      
+      const advisorType = advisorTypeMap[input.specialty.toLowerCase()];
+      if (advisorType) {
+        kingdom.addAdvisor(advisorType);
+      }
 
       await this.kingdomRepository.save(kingdom);
       await this.unitOfWork.commit();

@@ -11,7 +11,11 @@ describe('GetActiveEventsQuery', () => {
       findActiveEvents: jest.fn(),
       findById: jest.fn(),
       save: jest.fn(),
-      markAsProcessed: jest.fn()
+      markAsProcessed: jest.fn(),
+      findByChainId: jest.fn(),
+      saveChainChoice: jest.fn(),
+      getChainChoices: jest.fn(),
+      isChainComplete: jest.fn()
     };
 
     query = new GetActiveEventsQuery(mockEventRepository);

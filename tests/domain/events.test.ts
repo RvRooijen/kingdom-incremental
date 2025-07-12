@@ -68,7 +68,7 @@ describe('Event System', () => {
 
   describe('EventChoice', () => {
     it('should create a valid event choice', () => {
-      const choice = new EventChoice({
+      const choice = new EventChoice({ id: 'test-choice-id',
         description: 'Distribute gold to the people',
         requirements: new ResourceRequirement({ gold: 100, influence: 0, loyalty: 0, population: 0, militaryPower: 0 }),
         immediateEffect: new EventConsequence({
@@ -93,7 +93,7 @@ describe('Event System', () => {
     });
 
     it('should validate choice requirements', () => {
-      const choice = new EventChoice({
+      const choice = new EventChoice({ id: 'test-choice-id',
         description: 'Build a monument',
         requirements: new ResourceRequirement({ gold: 500, influence: 20, loyalty: 0, population: 500, militaryPower: 10 }),
         immediateEffect: new EventConsequence({
@@ -122,7 +122,7 @@ describe('Event System', () => {
 
     it('should create an event with required properties', () => {
       const choices = [
-        new EventChoice({
+        new EventChoice({ id: 'test-choice-id',
           description: 'Accept',
           requirements: new ResourceRequirement({ gold: 0, influence: 0, loyalty: 0, population: 0, militaryPower: 0 }),
           immediateEffect: new EventConsequence({
@@ -146,7 +146,7 @@ describe('Event System', () => {
 
     it('should check if event has expired', () => {
       const choices = [
-        new EventChoice({
+        new EventChoice({ id: 'test-choice-id',
           description: 'Accept',
           requirements: new ResourceRequirement({ gold: 0, influence: 0, loyalty: 0, population: 0, militaryPower: 0 }),
           immediateEffect: new EventConsequence({
@@ -175,7 +175,7 @@ describe('Event System', () => {
 
     it('should return available choices based on resources', () => {
       const choices = [
-        new EventChoice({
+        new EventChoice({ id: 'test-choice-id',
           description: 'Cheap option',
           requirements: new ResourceRequirement({ gold: 10, influence: 0, loyalty: 0, population: 0, militaryPower: 0 }),
           immediateEffect: new EventConsequence({
@@ -186,7 +186,7 @@ describe('Event System', () => {
           }),
           longTermEffects: []
         }),
-        new EventChoice({
+        new EventChoice({ id: 'test-choice-id',
           description: 'Expensive option',
           requirements: new ResourceRequirement({ gold: 1000, influence: 0, loyalty: 0, population: 0, militaryPower: 0 }),
           immediateEffect: new EventConsequence({
@@ -212,7 +212,7 @@ describe('Event System', () => {
     describe('PoliticalEvent', () => {
       it('should create a political event', () => {
         const choices = [
-          new EventChoice({
+          new EventChoice({ id: 'test-choice-id',
             description: 'Support the nobles',
             requirements: new ResourceRequirement({ gold: 100, influence: 0, loyalty: 0, population: 0, militaryPower: 0 }),
             immediateEffect: new EventConsequence({
@@ -233,7 +233,7 @@ describe('Event System', () => {
     describe('EconomicEvent', () => {
       it('should create an economic event', () => {
         const choices = [
-          new EventChoice({
+          new EventChoice({ id: 'test-choice-id',
             description: 'Invest in trade routes',
             requirements: new ResourceRequirement({ gold: 500, influence: 0, loyalty: 0, population: 0, militaryPower: 0 }),
             immediateEffect: new EventConsequence({
@@ -261,7 +261,7 @@ describe('Event System', () => {
     describe('MilitaryEvent', () => {
       it('should create a military event', () => {
         const choices = [
-          new EventChoice({
+          new EventChoice({ id: 'test-choice-id',
             description: 'Train new soldiers',
             requirements: new ResourceRequirement({ gold: 200, influence: 0, loyalty: 0, population: 100, militaryPower: 0 }),
             immediateEffect: new EventConsequence({
@@ -282,7 +282,8 @@ describe('Event System', () => {
     describe('SocialEvent', () => {
       it('should create a social event', () => {
         const choices = [
-          new EventChoice({
+          new EventChoice({ 
+            id: 'choice-1',
             description: 'Host a festival',
             requirements: new ResourceRequirement({ gold: 300, influence: 10, loyalty: 0, population: 0, militaryPower: 0 }),
             immediateEffect: new EventConsequence({
@@ -303,7 +304,7 @@ describe('Event System', () => {
     describe('DiplomaticEvent', () => {
       it('should create a diplomatic event', () => {
         const choices = [
-          new EventChoice({
+          new EventChoice({ id: 'test-choice-id',
             description: 'Accept the alliance',
             requirements: new ResourceRequirement({ gold: 0, influence: 0, loyalty: 0, population: 0, militaryPower: 0 }),
             immediateEffect: new EventConsequence({

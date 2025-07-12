@@ -10,6 +10,9 @@ import { Advisor } from './Advisor';
 import { CharacterType } from '../value-objects/CharacterType';
 import { AdvisorType } from '../value-objects/AdvisorType';
 import { ResourceType } from '../value-objects/ResourceType';
+import { PrestigeService, PrestigeBonuses, PrestigeResult } from '../services/PrestigeService';
+import { AchievementService } from '../services/AchievementService';
+import { Achievement } from './Achievement';
 
 export class Kingdom extends AggregateRoot {
   private readonly _name: string;
@@ -27,6 +30,12 @@ export class Kingdom extends AggregateRoot {
     [ResourceType.FAITH, 0],
     [ResourceType.KNOWLEDGE, 0],
   ]);
+  private _prestigeLevel: number = 0;
+  private _completedEventsCount: number = 0;
+  private readonly _prestigeService: PrestigeService;
+  private readonly _achievementService: AchievementService;
+  private readonly _unlockedAchievements: Set<string> = new Set();
+  private readonly _achievementMultipliers: Map<ResourceType, number> = new Map();
   
   constructor(name: string) {
     super();
@@ -36,6 +45,11 @@ export class Kingdom extends AggregateRoot {
     this._factions = this.initializeFactions();
     this._resourceGenerator = new ResourceGenerator();
     this._factionService = new FactionService();
+    this._prestigeService = new PrestigeService();
+    this._achievementService = new AchievementService();
+    
+    // Initialize starting resources
+    this._resourceMap.set(ResourceType.GOLD, 100);
   }
 
   get name(): string {
@@ -203,5 +217,111 @@ export class Kingdom extends AggregateRoot {
 
   getLastCalculation(): number {
     return this._lastCalculation;
+  }
+
+  // Prestige system
+  get prestigeLevel(): number {
+    return this._prestigeLevel;
+  }
+
+  get completedEventsCount(): number {
+    return this._completedEventsCount;
+  }
+
+  incrementCompletedEvents(): void {
+    this._completedEventsCount++;
+  }
+
+  getPrestigeBonuses(): PrestigeBonuses {
+    return this._prestigeService.calculatePrestigeBonuses(this._prestigeLevel);
+  }
+
+  canPrestige(): boolean {
+    return this._prestigeService.canPrestige(this);
+  }
+
+  performPrestige(): PrestigeResult {
+    if (!this.canPrestige()) {
+      return {
+        success: false,
+        error: `Insufficient completed events. Required: 10, Current: ${this._completedEventsCount}`
+      };
+    }
+
+    // Increment prestige level
+    this._prestigeLevel++;
+
+    // Get reset data
+    const resetData = this._prestigeService.preparePrestigeReset(this, this._prestigeLevel);
+
+    // Reset resources
+    for (const [type, amount] of resetData.newResources) {
+      this._resourceMap.set(type, amount);
+    }
+
+    // Reset faction relations with retention
+    for (const [factionName, faction] of this._factions) {
+      const retainedRelation = resetData.retainedFactionRelations.get(factionName) || 0;
+      faction.setApprovalRating(50 + retainedRelation);
+    }
+
+    // Reset completed events
+    this._completedEventsCount = 0;
+
+    // Clear advisors and characters (they don't persist through prestige)
+    this._advisors.length = 0;
+    this._characters.length = 0;
+
+    // Get new bonuses
+    const bonuses = this.getPrestigeBonuses();
+
+    // Add domain event
+    this.addDomainEvent({
+      aggregateId: this.id,
+      eventType: 'PrestigePerformed',
+      occurredAt: new Date(),
+      payload: {
+        prestigeLevel: this._prestigeLevel,
+        bonuses
+      }
+    } as any);
+
+    return {
+      success: true,
+      newPrestigeLevel: this._prestigeLevel,
+      bonuses
+    };
+  }
+
+  // Achievement system
+  get unlockedAchievements(): Set<string> {
+    return new Set(this._unlockedAchievements);
+  }
+
+  checkAchievements(): Achievement[] {
+    return this._achievementService.checkAchievements(this);
+  }
+
+  hasUnlockedAchievement(achievementId: string): boolean {
+    return this._unlockedAchievements.has(achievementId);
+  }
+
+  addUnlockedAchievement(achievementId: string): void {
+    this._unlockedAchievements.add(achievementId);
+  }
+
+  getUnlockedAchievements(): string[] {
+    return Array.from(this._unlockedAchievements);
+  }
+
+  addAchievementMultipliers(multipliers: { [key in ResourceType]?: number }): void {
+    for (const [resource, multiplier] of Object.entries(multipliers)) {
+      const currentMultiplier = this._achievementMultipliers.get(resource as ResourceType) || 1;
+      this._achievementMultipliers.set(resource as ResourceType, currentMultiplier * (multiplier as number));
+    }
+  }
+
+  getAchievementMultiplier(resource: ResourceType): number {
+    return this._achievementMultipliers.get(resource) || 1;
   }
 }

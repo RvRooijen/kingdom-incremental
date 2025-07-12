@@ -2,6 +2,7 @@ export interface RecruitAdvisorInputDto {
   kingdomId: string;
   advisorName: string;
   specialty: 'Military' | 'Economic' | 'Diplomatic' | 'Religious' | 'Administrative';
+  advisorType?: string;
 }
 
 export interface RecruitAdvisorOutputDto {

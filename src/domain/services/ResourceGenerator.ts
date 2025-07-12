@@ -50,6 +50,12 @@ export class ResourceGenerator {
       }
     }
 
+    // Apply prestige bonus to all resources
+    const prestigeBonuses = kingdom.getPrestigeBonuses();
+    for (const [resource, rate] of rates) {
+      rates.set(resource, rate * prestigeBonuses.resourceMultiplier);
+    }
+
     return rates;
   }
 

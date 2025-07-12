@@ -12,7 +12,8 @@ describe('GetFactionStatusQuery', () => {
       findById: jest.fn(),
       save: jest.fn(),
       exists: jest.fn(),
-      findByName: jest.fn()
+      findByName: jest.fn(),
+      findAll: jest.fn()
     };
 
     query = new GetFactionStatusQuery(mockKingdomRepository);

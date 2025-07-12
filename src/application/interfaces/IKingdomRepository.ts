@@ -5,4 +5,5 @@ export interface IKingdomRepository {
   save(kingdom: Kingdom): Promise<void>;
   exists(id: string): Promise<boolean>;
   findByName(name: string): Promise<Kingdom | null>;
+  findAll(): Promise<Kingdom[]>;
 }
