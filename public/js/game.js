@@ -59,10 +59,16 @@ async function init() {
     initializeStatistics();
     
     // Check if we have a saved kingdom ID
-    const savedKingdomId = localStorage.getItem('kingdomId');
+    const savedKingdomId = localStorage.getItem('currentKingdomId');
     if (savedKingdomId) {
         gameState.kingdomId = savedKingdomId;
-        await loadKingdom();
+        try {
+            await loadKingdom();
+        } catch (error) {
+            console.error('Failed to load saved kingdom:', error);
+            localStorage.removeItem('currentKingdomId');
+            updateStatus('Ready to play');
+        }
     }
     
     // Setup event listeners
@@ -77,7 +83,6 @@ async function handleCreateKingdom(e) {
     e.preventDefault();
     
     const kingdomName = document.getElementById('kingdom-name').value;
-    const rulerName = document.getElementById('ruler-name').value;
     
     try {
         updateStatus('Creating kingdom...');
@@ -85,14 +90,14 @@ async function handleCreateKingdom(e) {
         const response = await fetch(`${API_BASE}/kingdoms`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ kingdomName, rulerName })
+            body: JSON.stringify({ name: kingdomName })
         });
         
         if (!response.ok) throw new Error('Failed to create kingdom');
         
         const data = await response.json();
-        gameState.kingdomId = data.kingdomId;
-        localStorage.setItem('kingdomId', gameState.kingdomId);
+        gameState.kingdomId = data.kingdom.id;
+        localStorage.setItem('currentKingdomId', gameState.kingdomId);
         
         await loadKingdom();
     } catch (error) {
@@ -124,7 +129,7 @@ async function loadKingdom() {
     } catch (error) {
         updateStatus('Error: ' + error.message, 'error');
         // Clear invalid kingdom ID
-        localStorage.removeItem('kingdomId');
+        localStorage.removeItem('currentKingdomId');
         gameState.kingdomId = null;
     }
 }

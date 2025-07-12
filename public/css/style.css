@@ -820,3 +820,25 @@ canvas {
         grid-template-columns: 1fr;
     }
 }
+/* Kingdom Info */
+.kingdom-info {
+    background-color: #16213e;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.kingdom-info h2 {
+    color: #f39c12;
+    margin-bottom: 10px;
+}
+
+.prestige-info {
+    font-size: 0.9em;
+    color: #bbb;
+}
+
+.prestige-info button {
+    margin-left: 10px;
+}

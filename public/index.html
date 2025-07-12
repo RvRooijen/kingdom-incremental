@@ -21,13 +21,21 @@
                 <h2>Create Your Kingdom</h2>
                 <form id="create-kingdom-form">
                     <input type="text" id="kingdom-name" placeholder="Kingdom Name" required>
-                    <input type="text" id="ruler-name" placeholder="Ruler Name" required>
-                    <button type="submit">Start Game</button>
+                    <button type="submit">Create Kingdom</button>
                 </form>
             </div>
 
             <!-- Game Screen -->
             <div id="game-screen" class="screen hidden">
+                <!-- Kingdom Info -->
+                <div id="kingdom-info" class="kingdom-info">
+                    <h2 id="kingdom-name-display">Kingdom Name</h2>
+                    <div class="prestige-info">
+                        Prestige Level: <span id="prestige-level">0</span>
+                        <button id="prestige-button" class="action-button hidden" onclick="openPrestigeModal()">Prestige</button>
+                    </div>
+                </div>
+                
                 <!-- Resources Panel -->
                 <section class="panel resources-panel">
                     <h2>Resources</h2>
