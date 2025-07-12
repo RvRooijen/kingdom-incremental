@@ -126,21 +126,21 @@ class MockEventRepository implements IEventRepository {
     this.activeEvents.set(kingdomId, filteredEvents);
   }
   
-  async findByChainId(chainId: string): Promise<EventDto[]> {
+  async findByChainId(_chainId: string): Promise<EventDto[]> {
     // Mock implementation
     return [];
   }
   
-  async saveChainChoice(kingdomId: string, chainId: string, choice: any): Promise<void> {
+  async saveChainChoice(_kingdomId: string, _chainId: string, _choice: any): Promise<void> {
     // Mock implementation
   }
   
-  async getChainChoices(kingdomId: string, chainId: string): Promise<any[]> {
+  async getChainChoices(_kingdomId: string, _chainId: string): Promise<any[]> {
     // Mock implementation
     return [];
   }
   
-  async isChainComplete(kingdomId: string, chainId: string): Promise<boolean> {
+  async isChainComplete(_kingdomId: string, _chainId: string): Promise<boolean> {
     // Mock implementation
     return false;
   }

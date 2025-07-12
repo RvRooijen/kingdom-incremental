@@ -105,8 +105,10 @@ describe('ResourceGenerator', () => {
       const kingdom = new Kingdom('Test Kingdom');
       kingdom.addCharacter(CharacterType.KING);
       
-      // Set current gold to near max
-      kingdom.addResource(ResourceType.GOLD, 9999);
+      // Set current gold to exactly 9999 (accounting for initial gold)
+      const initialGold = kingdom.getResource(ResourceType.GOLD);
+      // First, we need to get to exactly 9999
+      kingdom.addResource(ResourceType.GOLD, 9999 - initialGold);
       
       const generator = new ResourceGenerator();
       

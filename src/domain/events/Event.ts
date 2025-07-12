@@ -66,7 +66,7 @@ export class EventChoice {
   public readonly chainData?: {
     nextEventModifier?: string;
     unlockConditions?: string[];
-  };
+  } | undefined;
 
   constructor(params: {
     id: string;

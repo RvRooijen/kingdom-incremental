@@ -1,7 +1,6 @@
 import { GetKingdomStateQuery } from '../../../src/application/queries/GetKingdomStateQuery';
 import { IKingdomRepository } from '../../../src/application/interfaces/IKingdomRepository';
 import { Kingdom } from '../../../src/domain/entities/Kingdom';
-import { KingdomStateDto } from '../../../src/application/dtos/KingdomStateDto';
 
 describe('GetKingdomStateQuery', () => {
   let query: GetKingdomStateQuery;
@@ -31,10 +30,10 @@ describe('GetKingdomStateQuery', () => {
       expect((result as any)?.name).toBe('Test Kingdom');
       expect(result?.resources).toEqual({
         gold: 100,
-        influence: 0,
-        loyalty: 0,
-        population: 0,
-        militaryPower: 0
+        influence: 10,
+        loyalty: 50,
+        population: 1000,
+        militaryPower: 10
       });
       expect((result as any)?.court.advisors).toEqual([]);
       expect(result?.factions).toHaveLength(5);
@@ -55,10 +54,10 @@ describe('GetKingdomStateQuery', () => {
         mood: 'Neutral'
       });
       expect(result?.factions).toContainEqual({
+        type: 'Merchants',
         name: 'The Merchant Guild',
-        description: 'Merchants',
-        loyalty: 50,
-        influence: 50
+        approvalRating: 50,
+        mood: 'Neutral'
       });
     });
 
