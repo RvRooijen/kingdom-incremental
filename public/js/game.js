@@ -58,24 +58,25 @@ async function init() {
     // Initialize statistics
     initializeStatistics();
     
+    // Setup event listeners
+    elements.createKingdomForm.addEventListener('submit', handleCreateKingdom);
+    elements.calculateTickBtn.addEventListener('click', calculateTick);
+    
     // Check if we have a saved kingdom ID
     const savedKingdomId = localStorage.getItem('currentKingdomId');
     if (savedKingdomId) {
         gameState.kingdomId = savedKingdomId;
         try {
             await loadKingdom();
+            // Status will be updated by loadKingdom
         } catch (error) {
             console.error('Failed to load saved kingdom:', error);
             localStorage.removeItem('currentKingdomId');
             updateStatus('Ready to play');
         }
+    } else {
+        updateStatus('Ready to play');
     }
-    
-    // Setup event listeners
-    elements.createKingdomForm.addEventListener('submit', handleCreateKingdom);
-    elements.calculateTickBtn.addEventListener('click', calculateTick);
-    
-    updateStatus('Ready to play');
 }
 
 // Create new kingdom
@@ -90,17 +91,27 @@ async function handleCreateKingdom(e) {
         const response = await fetch(`${API_BASE}/kingdoms`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: kingdomName })
+            body: JSON.stringify({ kingdomName: kingdomName, rulerName: 'King' })
         });
         
-        if (!response.ok) throw new Error('Failed to create kingdom');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create kingdom');
+        }
         
         const data = await response.json();
-        gameState.kingdomId = data.kingdom.id;
+        console.log('Create kingdom response:', data);
+        
+        if (!data.kingdomId) {
+            throw new Error('Invalid response: missing kingdomId');
+        }
+        
+        gameState.kingdomId = data.kingdomId;
         localStorage.setItem('currentKingdomId', gameState.kingdomId);
         
         await loadKingdom();
     } catch (error) {
+        console.error('Create kingdom error:', error);
         updateStatus('Error: ' + error.message, 'error');
     }
 }
@@ -1012,3 +1023,6 @@ function updatePrestigeButton() {
         prestigeButton.classList.remove('hidden');
     }
 }
+
+// Start the game when DOM is loaded
+document.addEventListener('DOMContentLoaded', init);
