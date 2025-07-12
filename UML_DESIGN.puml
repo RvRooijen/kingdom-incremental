@@ -1,0 +1,1034 @@
+@startuml KingdomIncrementalGameDesign
+
+!define ENTITY_COLOR #E1F5FE
+!define VALUE_OBJECT_COLOR #F0F4C3
+!define SERVICE_COLOR #FFCCBC
+!define REPOSITORY_COLOR #D1C4E9
+!define AGGREGATE_COLOR #B2DFDB
+
+' ==========================================
+' DOMAIN MODEL - CLASS DIAGRAM
+' ==========================================
+
+package "Domain.Entities" #DDDDDD {
+  
+  class Kingdom <<Aggregate Root>> {
+    - id: Guid
+    - name: string
+    - resources: Resources
+    - court: RoyalCourt
+    - factions: Dictionary<FactionType, Faction>
+    - activeEvents: List<KingdomEvent>
+    - eventHistory: List<EventHistoryEntry>
+    - prestigeLevel: int
+    - lastCalculation: DateTime
+    - diplomaticRelations: List<DiplomaticRelation>
+    --
+    + Kingdom(name: string)
+    + CalculateResourceGeneration(seconds: int): void
+    + TriggerEvent(event: KingdomEvent): void
+    + MakeEventChoice(eventId: Guid, choiceId: Guid): EventResult
+    + ApplyEventConsequences(consequences: EventConsequence): void
+    + CheckFactionTriggers(): List<KingdomEvent>
+    + Prestige(): PrestigeResult
+    + GetResourceMultiplier(): decimal
+    + RecruitAdvisor(type: AdvisorType): Result
+    + CanAfford(cost: ResourceRequirement): bool
+    + SpendResources(cost: ResourceRequirement): void
+    + AddResources(gain: ResourceGain): void
+  }
+
+  class Resources <<Value Object>> {
+    - gold: decimal
+    - influence: decimal  
+    - loyalty: decimal
+    - population: int
+    - militaryPower: decimal
+    --
+    + Resources(gold: decimal, influence: decimal, loyalty: decimal, population: int, militaryPower: decimal)
+    + Add(other: Resources): Resources
+    + Subtract(other: Resources): Resources
+    + Multiply(multiplier: decimal): Resources
+    + CanAfford(requirement: ResourceRequirement): bool
+  }
+
+  class RoyalCourt {
+    - king: Ruler
+    - queen: Ruler
+    - advisors: Dictionary<AdvisorType, Advisor>
+    - courtiers: List<Courtier>
+    --
+    + RoyalCourt()
+    + GetTotalResourceGeneration(): ResourceGeneration
+    + HasAdvisor(type: AdvisorType): bool
+    + RecruitAdvisor(advisor: Advisor): void
+    + GetAdvisorBonus(type: AdvisorType): decimal
+    + FireAdvisor(type: AdvisorType): void
+  }
+
+  abstract class Character {
+    # id: Guid
+    # name: string
+    # traits: List<CharacterTrait>
+    # loyalty: int
+    --
+    + Character(name: string)
+    + ModifyLoyalty(amount: int): void
+    + HasTrait(trait: CharacterTrait): bool
+  }
+
+  class Ruler extends Character {
+    - title: string
+    - age: int
+    - reignStarted: DateTime
+    - resourceGeneration: ResourceGeneration
+    --
+    + Ruler(name: string, title: string)
+    + GetResourceGeneration(): ResourceGeneration
+    + Age(): void
+    + Die(): RulerDeathEvent
+  }
+
+  class Advisor extends Character {
+    - type: AdvisorType
+    - salary: ResourceRequirement
+    - bonuses: AdvisorBonuses
+    - specialAbilities: List<SpecialAbility>
+    --
+    + Advisor(name: string, type: AdvisorType)
+    + GetBonus(bonusType: BonusType): decimal
+    + CanUnlockChoice(event: KingdomEvent): bool
+    + ApplyMonthlyEffects(kingdom: Kingdom): void
+  }
+
+  class Faction {
+    - type: FactionType
+    - name: string
+    - approvalRating: int
+    - mood: FactionMood
+    - power: int
+    - demands: List<FactionDemand>
+    - leader: Character
+    --
+    + Faction(type: FactionType, name: string)
+    + ModifyApproval(amount: int): void
+    + CalculateMood(): FactionMood
+    + GetPowerLevel(): int
+    + CheckForEvents(): List<FactionEvent>
+    + MakeDemand(): FactionDemand
+  }
+
+  abstract class KingdomEvent <<Abstract>> {
+    # id: Guid
+    # title: string
+    # description: string
+    # type: EventType
+    # category: EventCategory
+    # choices: List<EventChoice>
+    # expiresAt: DateTime
+    # priority: EventPriority
+    # requirements: EventRequirements
+    --
+    + KingdomEvent(title: string, description: string)
+    + IsExpired(): bool
+    + GetAvailableChoices(kingdom: Kingdom): List<EventChoice>
+    + Execute(choice: EventChoice, kingdom: Kingdom): EventResult
+    # ValidateChoice(choice: EventChoice, kingdom: Kingdom): bool
+  }
+
+  class PoliticalEvent extends KingdomEvent {
+    - affectedFactions: List<FactionType>
+    - diplomaticImpact: DiplomaticImpact
+    --
+    + PoliticalEvent(title: string, description: string)
+  }
+
+  class EconomicEvent extends KingdomEvent {
+    - economicSeverity: EconomicSeverity
+    - tradeImpact: TradeImpact
+    --
+    + EconomicEvent(title: string, description: string)
+  }
+
+  class MilitaryEvent extends KingdomEvent {
+    - threatLevel: ThreatLevel
+    - enemyStrength: decimal
+    --
+    + MilitaryEvent(title: string, description: string)
+  }
+
+  class SocialEvent extends KingdomEvent {
+    - affectedPopulation: int
+    - culturalImpact: CulturalImpact
+    --
+    + SocialEvent(title: string, description: string)
+  }
+
+  class EventChoice {
+    - id: Guid
+    - description: string
+    - requirements: ChoiceRequirements
+    - immediateEffect: ImmediateConsequence
+    - longTermEffects: List<LongTermConsequence>
+    - hiddenConsequences: List<HiddenConsequence>
+    - triggerEvents: List<EventTrigger>
+    --
+    + EventChoice(description: string)
+    + IsAvailable(kingdom: Kingdom): bool
+    + Execute(kingdom: Kingdom): EventResult
+    + GetTooltip(kingdom: Kingdom): string
+  }
+
+  class EventHistoryEntry {
+    - id: Guid
+    - eventId: Guid
+    - eventTitle: string
+    - choiceDescription: string
+    - consequences: EventConsequence
+    - occurredAt: DateTime
+    - prestigeLevel: int
+    --
+    + EventHistoryEntry(event: KingdomEvent, choice: EventChoice)
+    + GetSummary(): string
+  }
+
+  class DiplomaticRelation {
+    - otherKingdomId: Guid
+    - otherKingdomName: string
+    - relationshipType: RelationshipType
+    - relationshipScore: int
+    - treaties: List<Treaty>
+    - lastInteraction: DateTime
+    --
+    + ModifyRelationship(amount: int): void
+    + AddTreaty(treaty: Treaty): void
+    + BreakTreaty(treatyId: Guid): DiplomaticConsequence
+  }
+}
+
+package "Domain.ValueObjects" #DDDDDD {
+  
+  class ResourceRequirement <<Value Object>> {
+    + gold: decimal?
+    + influence: decimal?
+    + loyalty: decimal?
+    + population: int?
+    + militaryPower: decimal?
+    + factionApproval: Dictionary<FactionType, int>
+    + advisorRequired: AdvisorType?
+    --
+    + IsSatisfiedBy(kingdom: Kingdom): bool
+    + GetMissingRequirements(kingdom: Kingdom): List<string>
+  }
+
+  class ResourceGeneration <<Value Object>> {
+    + goldPerSecond: decimal
+    + influencePerSecond: decimal
+    + loyaltyPerSecond: decimal
+    + populationGrowthRate: decimal
+    + militaryGrowthRate: decimal
+    --
+    + Multiply(multiplier: decimal): ResourceGeneration
+    + Add(other: ResourceGeneration): ResourceGeneration
+  }
+
+  class EventConsequence <<Value Object>> {
+    + resourceChanges: Resources
+    + factionEffects: Dictionary<FactionType, int>
+    + unlocks: List<UnlockType>
+    + narrativeText: string
+    + permanentModifiers: List<Modifier>
+    --
+    + Apply(kingdom: Kingdom): void
+    + GetDescription(): string
+  }
+
+  class AdvisorBonuses <<Value Object>> {
+    + resourceMultipliers: Dictionary<ResourceType, decimal>
+    + factionInfluence: Dictionary<FactionType, decimal>
+    + eventChanceModifiers: Dictionary<EventType, decimal>
+    + specialAbilities: List<SpecialAbility>
+  }
+
+  class CharacterTrait <<Value Object>> {
+    + name: string
+    + description: string
+    + effects: TraitEffects
+    + incompatibleTraits: List<string>
+  }
+
+  class Modifier <<Value Object>> {
+    + id: Guid
+    + name: string
+    + description: string
+    + effects: ModifierEffects
+    + duration: TimeSpan?
+    + stackable: bool
+  }
+}
+
+package "Domain.Enums" #DDDDDD {
+  enum EventType {
+    Political
+    Economic
+    Military
+    Social
+    Diplomatic
+    Religious
+    Mystical
+  }
+
+  enum EventCategory {
+    Crisis
+    Opportunity  
+    Recurring
+    Chain
+    Random
+  }
+
+  enum FactionType {
+    Nobility
+    Merchants
+    Military
+    Clergy
+    Commoners
+  }
+
+  enum AdvisorType {
+    Treasurer
+    Diplomat
+    General
+    Spymaster
+    CourtWizard
+  }
+
+  enum FactionMood {
+    Rebellious
+    Hostile
+    Unhappy
+    Neutral
+    Content
+    Happy
+    Loyal
+  }
+
+  enum ResourceType {
+    Gold
+    Influence
+    Loyalty
+    Population
+    MilitaryPower
+  }
+
+  enum RelationshipType {
+    Alliance
+    Trade
+    Neutral
+    Rivalry
+    War
+  }
+
+  enum EventPriority {
+    Low
+    Medium
+    High
+    Critical
+  }
+}
+
+package "Domain.Services" #DDDDDD {
+  
+  interface IEventGenerator <<Interface>> {
+    + GenerateRandomEvent(kingdom: Kingdom): KingdomEvent
+    + GenerateFactionEvent(faction: Faction): KingdomEvent
+    + GenerateChainEvent(previousEvent: EventHistoryEntry): KingdomEvent
+    + GetEventProbabilities(kingdom: Kingdom): Dictionary<EventType, float>
+  }
+
+  class EventGeneratorService implements IEventGenerator {
+    - eventTemplates: List<EventTemplate>
+    - randomizer: IRandomizer
+    --
+    + GenerateRandomEvent(kingdom: Kingdom): KingdomEvent
+    + GenerateFactionEvent(faction: Faction): KingdomEvent
+    + GenerateChainEvent(previousEvent: EventHistoryEntry): KingdomEvent
+    + GetEventProbabilities(kingdom: Kingdom): Dictionary<EventType, float>
+    - SelectEventTemplate(kingdom: Kingdom): EventTemplate
+    - CustomizeEvent(template: EventTemplate, kingdom: Kingdom): KingdomEvent
+  }
+
+  interface IResourceCalculator <<Interface>> {
+    + CalculateGeneration(kingdom: Kingdom, seconds: int): Resources
+    + CalculateOfflineProgress(kingdom: Kingdom, offlineTime: TimeSpan): OfflineProgress
+    + ApplyPrestigeBonus(base: Resources, prestigeLevel: int): Resources
+  }
+
+  class ResourceCalculatorService implements IResourceCalculator {
+    - maxOfflineHours: int = 24
+    --
+    + CalculateGeneration(kingdom: Kingdom, seconds: int): Resources
+    + CalculateOfflineProgress(kingdom: Kingdom, offlineTime: TimeSpan): OfflineProgress
+    + ApplyPrestigeBonus(base: Resources, prestigeLevel: int): Resources
+    - GetBaseGeneration(kingdom: Kingdom): ResourceGeneration
+    - ApplyModifiers(base: ResourceGeneration, kingdom: Kingdom): ResourceGeneration
+  }
+
+  interface IFactionManager <<Interface>> {
+    + UpdateFactionRelations(kingdom: Kingdom, eventResult: EventResult): void
+    + CheckFactionTriggers(kingdom: Kingdom): List<FactionEvent>
+    + CalculateFactionPower(faction: Faction): int
+  }
+}
+
+package "Domain.Events" #DDDDDD {
+  
+  abstract class DomainEvent <<Abstract>> {
+    + aggregateId: Guid
+    + occurredAt: DateTime
+    + version: int
+    --
+    + DomainEvent(aggregateId: Guid)
+  }
+
+  class KingdomCreatedEvent extends DomainEvent {
+    + kingdomName: string
+    + rulerNames: RulerPair
+  }
+
+  class EventChoiceMadeEvent extends DomainEvent {
+    + eventId: Guid
+    + choiceId: Guid
+    + consequences: EventConsequence
+  }
+
+  class PrestigePerformedEvent extends DomainEvent {
+    + oldLevel: int
+    + newLevel: int
+    + bonusesGained: List<PrestigeBonus>
+  }
+
+  class AdvisorRecruitedEvent extends DomainEvent {
+    + advisorType: AdvisorType
+    + advisorName: string
+    + cost: ResourceRequirement
+  }
+
+  class FactionRevoltEvent extends DomainEvent {
+    + factionType: FactionType
+    + severity: RevoltSeverity
+  }
+}
+
+' ==========================================
+' APPLICATION LAYER
+' ==========================================
+
+package "Application.Commands" #DDDDDD {
+  
+  class CreateKingdomCommand {
+    + kingdomName: string
+    + kingName: string
+    + queenName: string
+  }
+
+  class MakeEventChoiceCommand {
+    + kingdomId: Guid
+    + eventId: Guid
+    + choiceId: Guid
+  }
+
+  class PerformPrestigeCommand {
+    + kingdomId: Guid
+  }
+
+  class RecruitAdvisorCommand {
+    + kingdomId: Guid
+    + advisorType: AdvisorType
+  }
+
+  interface ICommandHandler<TCommand> <<Interface>> {
+    + Handle(command: TCommand): Task<Result>
+  }
+
+  class CreateKingdomCommandHandler implements ICommandHandler {
+    - kingdomRepository: IKingdomRepository
+    - unitOfWork: IUnitOfWork
+    --
+    + Handle(command: CreateKingdomCommand): Task<Result>
+  }
+}
+
+package "Application.Queries" #DDDDDD {
+  
+  class GetKingdomStateQuery {
+    + kingdomId: Guid
+    + includeHistory: bool
+  }
+
+  class GetActiveEventsQuery {
+    + kingdomId: Guid
+  }
+
+  interface IQueryHandler<TQuery, TResult> <<Interface>> {
+    + Handle(query: TQuery): Task<TResult>
+  }
+
+  class KingdomStateDto {
+    + id: Guid
+    + name: string
+    + resources: ResourcesDto
+    + court: RoyalCourtDto
+    + factions: List<FactionDto>
+    + activeEvents: List<EventDto>
+    + prestigeLevel: int
+  }
+}
+
+package "Application.Services" #DDDDDD {
+  
+  interface IGameLoopService <<Interface>> {
+    + ProcessGameTick(kingdomId: Guid): Task
+    + CalculateOfflineProgress(kingdomId: Guid): Task<OfflineProgressDto>
+  }
+
+  class GameLoopService implements IGameLoopService {
+    - kingdomRepository: IKingdomRepository
+    - eventGenerator: IEventGenerator
+    - resourceCalculator: IResourceCalculator
+    - eventBus: IEventBus
+    --
+    + ProcessGameTick(kingdomId: Guid): Task
+    + CalculateOfflineProgress(kingdomId: Guid): Task<OfflineProgressDto>
+    - CheckAndTriggerEvents(kingdom: Kingdom): Task
+    - UpdateResources(kingdom: Kingdom): Task
+  }
+}
+
+' ==========================================
+' INFRASTRUCTURE LAYER
+' ==========================================
+
+package "Infrastructure.Persistence" #DDDDDD {
+  
+  interface IKingdomRepository <<Interface>> {
+    + GetById(id: Guid): Task<Kingdom>
+    + Save(kingdom: Kingdom): Task
+    + Delete(id: Guid): Task
+  }
+
+  class KingdomRepository implements IKingdomRepository {
+    - context: GameDbContext
+    --
+    + GetById(id: Guid): Task<Kingdom>
+    + Save(kingdom: Kingdom): Task
+    + Delete(id: Guid): Task
+  }
+
+  class GameDbContext {
+    + Kingdoms: DbSet<Kingdom>
+    + Events: DbSet<KingdomEvent>
+    + EventHistory: DbSet<EventHistoryEntry>
+    --
+    # OnModelCreating(builder: ModelBuilder): void
+  }
+
+  interface IUnitOfWork <<Interface>> {
+    + SaveChangesAsync(): Task<int>
+    + BeginTransaction(): Task<IDbContextTransaction>
+  }
+}
+
+' ==========================================
+' RELATIONSHIPS
+' ==========================================
+
+' Aggregates and Entities
+Kingdom "1" *-- "1" Resources : has
+Kingdom "1" *-- "1" RoyalCourt : has
+Kingdom "1" *-- "5" Faction : has
+Kingdom "1" *-- "0..*" KingdomEvent : activeEvents
+Kingdom "1" *-- "0..*" EventHistoryEntry : history
+Kingdom "1" *-- "0..*" DiplomaticRelation : relations
+
+RoyalCourt "1" *-- "1" Ruler : king
+RoyalCourt "1" *-- "1" Ruler : queen
+RoyalCourt "1" *-- "0..5" Advisor : advisors
+
+KingdomEvent "1" *-- "2..*" EventChoice : choices
+EventChoice "1" *-- "1" ResourceRequirement : requirements
+EventChoice "1" *-- "1" EventConsequence : immediateEffect
+EventChoice "1" *-- "0..*" EventConsequence : longTermEffects
+
+Faction "1" o-- "1" Character : leader
+
+' Inheritance
+Character <|-- Ruler
+Character <|-- Advisor
+KingdomEvent <|-- PoliticalEvent
+KingdomEvent <|-- EconomicEvent
+KingdomEvent <|-- MilitaryEvent
+KingdomEvent <|-- SocialEvent
+
+' Services
+EventGeneratorService ..> KingdomEvent : creates
+ResourceCalculatorService ..> Resources : calculates
+GameLoopService ..> Kingdom : updates
+GameLoopService ..> IEventGenerator : uses
+GameLoopService ..> IResourceCalculator : uses
+
+' Commands and Handlers
+CreateKingdomCommandHandler ..> IKingdomRepository : uses
+CreateKingdomCommandHandler ..> CreateKingdomCommand : handles
+
+' Repositories
+KingdomRepository ..> GameDbContext : uses
+KingdomRepository ..> Kingdom : persists
+
+@enduml
+
+' ==========================================
+' SEQUENCE DIAGRAMS
+' ==========================================
+
+@startuml EventChoiceSequence
+!theme plain
+
+title "Event Choice Processing Sequence"
+
+actor Player
+participant "API Controller" as API
+participant "CommandHandler" as Handler
+participant "Kingdom" as Kingdom
+participant "Event" as Event
+participant "EventChoice" as Choice
+participant "Repository" as Repo
+participant "EventBus" as Bus
+
+Player -> API: POST /kingdoms/{id}/events/{eventId}/choose
+API -> Handler: Handle(MakeEventChoiceCommand)
+Handler -> Repo: GetById(kingdomId)
+Repo --> Handler: Kingdom
+
+Handler -> Kingdom: GetActiveEvent(eventId)
+Kingdom --> Handler: KingdomEvent
+
+Handler -> Event: GetChoice(choiceId)
+Event --> Handler: EventChoice
+
+Handler -> Kingdom: CanAfford(choice.requirements)
+alt Can Afford
+    Kingdom --> Handler: true
+    Handler -> Kingdom: MakeEventChoice(eventId, choiceId)
+    Kingdom -> Choice: Execute(kingdom)
+    Choice -> Kingdom: ApplyConsequences()
+    Kingdom -> Kingdom: UpdateResources()
+    Kingdom -> Kingdom: UpdateFactions()
+    Choice --> Kingdom: EventResult
+    Kingdom --> Handler: EventResult
+    
+    Handler -> Repo: Save(kingdom)
+    Handler -> Bus: Publish(EventChoiceMadeEvent)
+    Handler --> API: Success(EventResultDto)
+    API --> Player: 200 OK
+else Cannot Afford
+    Kingdom --> Handler: false
+    Handler --> API: BadRequest("Insufficient resources")
+    API --> Player: 400 Bad Request
+end
+
+@enduml
+
+@startuml GameLoopSequence
+!theme plain
+
+title "Game Loop Processing Sequence"
+
+participant "Timer" as Timer
+participant "GameLoopService" as Loop
+participant "ResourceCalculator" as Calc
+participant "EventGenerator" as Gen
+participant "Kingdom" as Kingdom
+participant "Repository" as Repo
+
+Timer -> Loop: Tick (every second)
+Loop -> Repo: GetActiveKingdoms()
+Repo --> Loop: List<Kingdom>
+
+loop For each Kingdom
+    Loop -> Calc: CalculateGeneration(kingdom, 1)
+    Calc -> Kingdom: GetResourceGeneration()
+    Kingdom --> Calc: ResourceGeneration
+    Calc -> Kingdom: GetModifiers()
+    Kingdom --> Calc: List<Modifier>
+    Calc --> Loop: Resources
+    
+    Loop -> Kingdom: AddResources(resources)
+    
+    alt Random Event Check
+        Loop -> Gen: ShouldGenerateEvent(kingdom)
+        Gen --> Loop: true
+        Loop -> Gen: GenerateRandomEvent(kingdom)
+        Gen -> Kingdom: GetState()
+        Kingdom --> Gen: State
+        Gen --> Loop: KingdomEvent
+        Loop -> Kingdom: TriggerEvent(event)
+    end
+    
+    Loop -> Kingdom: CheckFactionTriggers()
+    Kingdom --> Loop: List<FactionEvent>
+    
+    loop For each FactionEvent
+        Loop -> Kingdom: TriggerEvent(factionEvent)
+    end
+    
+    Loop -> Repo: Save(kingdom)
+end
+
+@enduml
+
+' ==========================================
+' STATE MACHINE DIAGRAMS
+' ==========================================
+
+@startuml EventStateMachine
+!theme plain
+
+title "Event State Machine"
+
+[*] --> Created: Event Generated
+
+Created --> Active: Triggered
+Created --> Expired: Timeout
+
+Active --> Resolved: Choice Made
+Active --> Expired: Timeout
+Active --> Cancelled: Cancelled by Effect
+
+Resolved --> Completed: Consequences Applied
+Resolved --> ChainTriggered: Has Chain Events
+
+ChainTriggered --> Created: New Event
+
+Completed --> [*]
+Expired --> [*]
+Cancelled --> [*]
+
+Active : - Waiting for player choice
+Active : - Checking requirements
+Active : - Display to player
+
+Resolved : - Apply immediate effects
+Resolved : - Schedule long-term effects
+Resolved : - Update faction relations
+
+@enduml
+
+@startuml FactionMoodStateMachine
+!theme plain
+
+title "Faction Mood State Machine"
+
+[*] --> Neutral: Initial
+
+Neutral --> Content: Approval > 60
+Neutral --> Unhappy: Approval < 40
+
+Content --> Happy: Approval > 70
+Content --> Neutral: Approval 40-60
+Content --> Loyal: Approval > 80 for 10 events
+
+Happy --> Loyal: Approval > 90
+Happy --> Content: Approval 60-70
+
+Unhappy --> Hostile: Approval < 20
+Unhappy --> Neutral: Approval > 40
+
+Hostile --> Rebellious: Approval < 10
+Hostile --> Unhappy: Approval > 20
+
+Rebellious --> CivilWar: Revolt Event
+Rebellious --> Hostile: Approval > 10
+
+Loyal --> Happy: Approval < 80
+CivilWar --> [*]: Kingdom Falls
+CivilWar --> Hostile: Revolt Suppressed
+
+@enduml
+
+' ==========================================
+' COMPONENT DIAGRAM
+' ==========================================
+
+@startuml ComponentDiagram
+!theme plain
+
+title "System Component Architecture"
+
+package "Presentation Layer" {
+    [Web API] as API
+    [SignalR Hub] as Hub
+}
+
+package "Application Layer" {
+    [Command Handlers] as Commands
+    [Query Handlers] as Queries
+    [Game Loop Service] as GameLoop
+    [Event Processing] as EventProc
+}
+
+package "Domain Layer" {
+    [Domain Entities] as Entities
+    [Domain Services] as Services
+    [Domain Events] as Events
+}
+
+package "Infrastructure Layer" {
+    [EF Core] as EF
+    [Repositories] as Repos
+    [Event Store] as EventStore
+    [Cache] as Cache
+}
+
+database "SQL Database" as DB
+database "Redis Cache" as Redis
+
+API --> Commands : Commands
+API --> Queries : Queries
+Hub --> GameLoop : Real-time updates
+
+Commands --> Entities : Manipulate
+Commands --> Services : Use
+Commands --> Events : Publish
+
+Queries --> Repos : Read
+Queries --> Cache : Check first
+
+GameLoop --> Services : Calculate
+GameLoop --> EventProc : Process
+GameLoop --> Hub : Notify
+
+EventProc --> Entities : Update
+EventProc --> Events : Publish
+
+Repos --> EF : Use
+Repos --> DB : Persist
+Cache --> Redis : Store
+
+EventStore --> DB : Store events
+
+@enduml
+
+' ==========================================
+' USE CASE DIAGRAM
+' ==========================================
+
+@startuml UseCaseDiagram
+!theme plain
+
+title "Kingdom Incremental Game - Use Cases"
+
+actor Player
+actor System
+
+rectangle "Kingdom Management" {
+    usecase "Create Kingdom" as UC1
+    usecase "View Kingdom State" as UC2
+    usecase "Make Event Choice" as UC3
+    usecase "Recruit Advisor" as UC4
+    usecase "Perform Prestige" as UC5
+}
+
+rectangle "Event System" {
+    usecase "Receive Event" as UC6
+    usecase "View Event Details" as UC7
+    usecase "See Choice Requirements" as UC8
+}
+
+rectangle "Political System" {
+    usecase "View Faction Status" as UC9
+    usecase "Manage Relations" as UC10
+    usecase "Form Alliance" as UC11
+}
+
+rectangle "Resource Management" {
+    usecase "Generate Resources" as UC12
+    usecase "Spend Resources" as UC13
+    usecase "Calculate Offline Progress" as UC14
+}
+
+Player --> UC1
+Player --> UC2
+Player --> UC3
+Player --> UC4
+Player --> UC5
+Player --> UC7
+Player --> UC8
+Player --> UC9
+Player --> UC10
+Player --> UC11
+
+System --> UC6
+System --> UC12
+System --> UC14
+
+UC3 ..> UC13 : includes
+UC3 ..> UC8 : includes
+UC4 ..> UC13 : includes
+UC6 ..> UC9 : affects
+UC11 ..> UC10 : extends
+
+@enduml
+
+' ==========================================
+' ACTIVITY DIAGRAM - Event Processing
+' ==========================================
+
+@startuml EventProcessingActivity
+!theme plain
+
+title "Event Choice Processing Flow"
+
+start
+
+:Player selects event choice;
+
+:Validate choice availability;
+
+if (Choice available?) then (yes)
+    :Check resource requirements;
+    
+    if (Requirements met?) then (yes)
+        :Check advisor requirements;
+        
+        if (Advisor available?) then (yes)
+            :Deduct resource cost;
+            :Apply immediate effects;
+            :Update faction relations;
+            :Schedule long-term effects;
+            
+            if (Has chain events?) then (yes)
+                :Queue chain events;
+            endif
+            
+            :Record in event history;
+            :Calculate prestige progress;
+            :Send notifications;
+            :Return success;
+        else (no)
+            :Return "Advisor required";
+        endif
+    else (no)
+        :Return "Insufficient resources";
+    endif
+else (no)
+    :Return "Choice not available";
+endif
+
+stop
+
+@enduml
+
+' ==========================================
+' ER DIAGRAM FOR DATABASE
+' ==========================================
+
+@startuml DatabaseERDiagram
+!theme plain
+
+title "Database Entity Relationship Diagram"
+
+entity Kingdom {
+    * **Id** : UUID <<PK>>
+    --
+    * Name : VARCHAR(100)
+    * Gold : DECIMAL(20,2)
+    * Influence : DECIMAL(20,2)
+    * Loyalty : DECIMAL(20,2)
+    * Population : INT
+    * MilitaryPower : DECIMAL(20,2)
+    * PrestigeLevel : INT
+    * LastCalculation : TIMESTAMP
+    * CreatedAt : TIMESTAMP
+    * UpdatedAt : TIMESTAMP
+}
+
+entity Faction {
+    * **Id** : UUID <<PK>>
+    --
+    * KingdomId : UUID <<FK>>
+    * Type : VARCHAR(50)
+    * ApprovalRating : INT
+    * Mood : VARCHAR(20)
+    * Power : INT
+    * LeaderName : VARCHAR(100)
+}
+
+entity Event {
+    * **Id** : UUID <<PK>>
+    --
+    * KingdomId : UUID <<FK>>
+    * Type : VARCHAR(50)
+    * Category : VARCHAR(50)
+    * Title : VARCHAR(200)
+    * Description : TEXT
+    * ChoicesJson : TEXT
+    * ExpiresAt : TIMESTAMP
+    * Status : VARCHAR(20)
+    * Priority : VARCHAR(20)
+}
+
+entity EventHistory {
+    * **Id** : UUID <<PK>>
+    --
+    * KingdomId : UUID <<FK>>
+    * EventId : UUID <<FK>>
+    * ChoiceId : UUID
+    * ChoiceDescription : TEXT
+    * ConsequencesJson : TEXT
+    * OccurredAt : TIMESTAMP
+    * PrestigeLevel : INT
+}
+
+entity Advisor {
+    * **Id** : UUID <<PK>>
+    --
+    * KingdomId : UUID <<FK>>
+    * Type : VARCHAR(50)
+    * Name : VARCHAR(100)
+    * TraitsJson : TEXT
+    * RecruitedAt : TIMESTAMP
+}
+
+entity DiplomaticRelation {
+    * **Id** : UUID <<PK>>
+    --
+    * KingdomId : UUID <<FK>>
+    * OtherKingdomId : UUID
+    * OtherKingdomName : VARCHAR(100)
+    * RelationshipType : VARCHAR(50)
+    * RelationshipScore : INT
+    * TreatiesJson : TEXT
+    * LastInteraction : TIMESTAMP
+}
+
+entity Modifier {
+    * **Id** : UUID <<PK>>
+    --
+    * KingdomId : UUID <<FK>>
+    * Name : VARCHAR(100)
+    * Description : TEXT
+    * EffectsJson : TEXT
+    * ExpiresAt : TIMESTAMP
+    * Source : VARCHAR(100)
+}
+
+Kingdom ||--o{ Faction : has
+Kingdom ||--o{ Event : triggers
+Kingdom ||--o{ EventHistory : records
+Kingdom ||--o{ Advisor : employs
+Kingdom ||--o{ DiplomaticRelation : maintains
+Kingdom ||--o{ Modifier : affects
+
+Event ||--o{ EventHistory : logged
+
+@enduml
