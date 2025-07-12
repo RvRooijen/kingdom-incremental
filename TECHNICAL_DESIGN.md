@@ -107,10 +107,15 @@ Events zijn de kern van het spel. Ze verschijnen regelmatig en vereisen keuzes:
 ### Technology Stack
 - **Backend**: Node.js met TypeScript
 - **Framework**: Express.js
-- **Database**: SQLite (development), PostgreSQL (production)
-- **ORM**: TypeORM
-- **Testing**: Jest, Supertest
+- **Database**: SQLite (development), PostgreSQL (production) - *planned*
+- **Testing**: Jest (106 tests), Supertest
 - **Architecture**: Clean Architecture / Domain-Driven Design
+- **Patterns**: CQRS, Repository, Domain Events, Value Objects
+- **Key Libraries**: 
+  - uuid (ID generation)
+  - winston (logging) - *ready to implement*
+  - cors & helmet (security)
+  - dotenv (configuration)
 
 ### Project Structuur
 ```
@@ -303,22 +308,32 @@ POST   /api/kingdoms/{id}/advisors/{type}/recruit - Recruit advisor
 POST   /api/kingdoms/{id}/prestige     - Perform prestige reset
 ```
 
-## 4. Test-Driven Development Strategie
+## 4. Test-Driven Development Status
 
-### Test Pyramid
-1. **Unit Tests** (70%)
-   - Domain logic
-   - Business rules
-   - Calculations
+### Test Coverage (Current: 106 tests, 100% passing)
+1. **Domain Tests** (41 tests)
+   - Kingdom entity tests (4)
+   - Resource generation tests (13)
+   - Event system tests (14)
+   - Faction mechanics tests (10)
 
-2. **Integration Tests** (20%)
-   - Repository tests
-   - API endpoint tests
-   - Database interactions
+2. **Application Tests** (53 tests)
+   - Command handler tests (30)
+   - Query handler tests (23)
+   - DTO validation
+   - Error handling
 
-3. **E2E Tests** (10%)
-   - Complete user flows
-   - Prestige cycles
+3. **API Tests** (12 tests)
+   - Kingdom endpoints (5)
+   - Event endpoints (4)
+   - Error handling (3)
+
+### Test Examples Available
+- Resource generation with advisor bonuses
+- Event choice validation
+- Faction approval changes
+- Offline progression calculation
+- API request/response validation
 
 ### TDD Workflow
 1. Write failing test voor nieuwe feature
@@ -506,26 +521,41 @@ CREATE TABLE Advisors (
 
 ## 9. Development Roadmap
 
-### Sprint 1 (Week 1-2)
-- [ ] Project setup
-- [ ] Domain models (Kingdom, Event, Faction)
-- [ ] Basic resource generation
-- [ ] Royal Court implementation
+### ✅ Sprint 1 (Completed)
+- [x] Project setup with TypeScript and Jest
+- [x] Domain models (Kingdom, Event, Faction, Resources)
+- [x] Basic resource generation with offline progression
+- [x] Royal Court implementation (King, Queen, Advisors)
+- [x] Character and Advisor entities
+- [x] ResourceGenerator service
 
-### Sprint 2 (Week 3-4)
-- [ ] Event system core
-- [ ] Event choices and consequences
-- [ ] Faction mechanics
+### ✅ Sprint 2 (Completed)
+- [x] Event system core with 5 event types
+- [x] Event choices and consequences
+- [x] Resource requirements for choices
+- [x] Faction mechanics with approval ratings
+- [x] Faction mood system (Hostile to Loyal)
+- [x] FactionService for event generation
+
+### ✅ Sprint 3 (Completed)
+- [x] Application layer with CQRS pattern
+- [x] Command handlers (Create, Choose, Recruit)
+- [x] Query handlers (State, Events, Factions)
+- [x] REST API implementation with Express
+- [x] Error handling middleware
+- [x] 106 unit tests with 100% pass rate
+
+### 🚧 Sprint 4 (Current)
+- [ ] Simple HTML/JS frontend for testing
+- [ ] Database integration (SQLite/PostgreSQL)
+- [ ] Prestige system implementation
 - [ ] Save/Load functionality
+- [ ] WebSocket for real-time updates
 
-### Sprint 3 (Week 5-6)
-- [ ] Complex event chains
-- [ ] Advisor system
-- [ ] Diplomacy basics
-- [ ] API implementation
-
-### Sprint 4 (Week 7-8)
-- [ ] Prestige system
-- [ ] Event balancing
-- [ ] Testing coverage 80%+
-- [ ] Performance optimization
+### 📋 Future Sprints
+- [ ] Complex event chains and storylines
+- [ ] Advisor special abilities
+- [ ] Achievement system
+- [ ] Game balancing and tuning
+- [ ] Production deployment
+- [ ] Multiplayer features

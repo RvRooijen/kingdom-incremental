@@ -40,13 +40,13 @@ tests/
 
 ### Prerequisites
 - Node.js 18+ 
-- npm of yarn
-- VS Code (aanbevolen)
+- npm (of yarn)
+- Git
 
 ### Installation
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/kingdom-incremental.git
+git clone https://github.com/RvRooijen/kingdom-incremental.git
 
 # Navigate to project
 cd kingdom-incremental
@@ -54,7 +54,7 @@ cd kingdom-incremental
 # Install dependencies
 npm install
 
-# Run tests
+# Run tests (106 tests should pass)
 npm test
 
 # Run application in development
@@ -62,7 +62,21 @@ npm run dev
 
 # Build for production
 npm run build
+
+# Start production server
+npm start
 ```
+
+### API Endpoints
+Once the server is running (default port 3000):
+
+- `POST /api/kingdoms` - Create a new kingdom
+- `GET /api/kingdoms/:id` - Get kingdom state
+- `PUT /api/kingdoms/:id/calculate` - Calculate resource tick
+- `GET /api/kingdoms/:id/events` - Get active events
+- `POST /api/kingdoms/:id/events/:eventId/choose` - Make event choice
+
+See [API Documentation](docs/API.md) for full details.
 
 ## 📚 Documentation
 
@@ -108,12 +122,36 @@ This project is licensed under the MIT License.
 
 Rick - Initial work
 
-## 🎯 Roadmap
+## 🎯 Current Status
 
+### ✅ Completed (v0.1.0)
 - [x] Project setup & architecture
-- [ ] Core domain implementation
-- [ ] Event system
-- [ ] Faction mechanics
-- [ ] API endpoints
-- [ ] Frontend (React/Vue)
+- [x] Complete domain layer implementation
+  - [x] Kingdom entity with resource management
+  - [x] Event system (5 event types: Political, Economic, Military, Social, Diplomatic)
+  - [x] Faction mechanics with approval ratings and mood system
+  - [x] Resource generation with offline progression
+  - [x] Royal Court with King, Queen, and Advisor system
+- [x] Application layer with CQRS pattern
+  - [x] Commands: CreateKingdom, MakeEventChoice, RecruitAdvisor
+  - [x] Queries: GetKingdomState, GetActiveEvents, GetFactionStatus
+  - [x] DTOs and error handling
+- [x] REST API endpoints
+  - [x] Kingdom management endpoints
+  - [x] Event system endpoints
+  - [x] Faction status endpoints
+- [x] Comprehensive test suite (106 tests, 100% passing)
+- [x] GitHub repository setup
+
+### 🚧 In Progress
+- [ ] Simple frontend for testing
+- [ ] Database integration (SQLite/PostgreSQL)
+- [ ] WebSocket support for real-time updates
+
+### 📋 Planned Features
+- [ ] Advanced event chains
+- [ ] Advisor special abilities
+- [ ] Prestige system
+- [ ] Achievement system
+- [ ] Save/Load functionality
 - [ ] Multiplayer features
