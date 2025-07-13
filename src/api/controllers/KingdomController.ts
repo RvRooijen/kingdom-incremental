@@ -125,12 +125,28 @@ export class KingdomController {
         return;
       }
       
-      const kingdomState = await this.getKingdomStateQuery.execute(id);
-      
-      if (!kingdomState) {
+      // Load kingdom and calculate offline progress
+      const kingdom = await this.kingdomRepository.findById(id);
+      if (!kingdom) {
         res.status(404).json({ error: 'Kingdom not found' });
         return;
       }
+      
+      // Calculate offline progress since last calculation
+      const now = Date.now();
+      const lastCalc = kingdom.getLastCalculation();
+      const timeElapsed = Math.floor((now - lastCalc) / 1000); // seconds
+      
+      if (timeElapsed > 0) {
+        // Apply offline progress
+        await kingdom.calculateResourceGeneration(timeElapsed);
+        
+        // Save the updated kingdom
+        await this.kingdomRepository.save(kingdom);
+      }
+      
+      // Get the updated state
+      const kingdomState = await this.getKingdomStateQuery.execute(id);
       
       res.json(kingdomState);
     } catch (error) {

@@ -93,7 +93,7 @@ export class Kingdom extends AggregateRoot {
     
     // Return generated resources in old format for compatibility
     const generatedResources = await this._resourceGenerator.generateResources(this, timeElapsedSeconds);
-    this._resources = this._resources.add(generatedResources);
+    // Don't update old resources system anymore - we use resourceMap now
     return generatedResources;
   }
 

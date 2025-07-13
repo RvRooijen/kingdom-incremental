@@ -25,11 +25,13 @@ export class GetKingdomStateQuery {
       id: kingdom.id,
       name: kingdom.name,
       resources: {
-        gold: kingdom.resources.gold,
-        influence: kingdom.resources.influence,
+        gold: kingdom.getResource(ResourceType.GOLD),
+        influence: kingdom.getResource(ResourceType.INFLUENCE),
         loyalty: kingdom.resources.loyalty,
         population: kingdom.resources.population,
-        militaryPower: kingdom.resources.militaryPower
+        militaryPower: kingdom.resources.militaryPower,
+        faith: kingdom.getResource(ResourceType.FAITH),
+        knowledge: kingdom.getResource(ResourceType.KNOWLEDGE)
       },
       court: {
         king: {
