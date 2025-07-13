@@ -1,0 +1,219 @@
+{
+  "events": [
+    {
+      "id": "trade-caravan",
+      "title": "Trade Caravan Arrives",
+      "description": "A merchant caravan from distant lands seeks to trade with your kingdom.",
+      "options": [
+        {
+          "text": "Accept the trade (+500 gold, -50 population)",
+          "effects": { "gold": 500, "population": -50 }
+        },
+        {
+          "text": "Decline politely",
+          "effects": {}
+        },
+        {
+          "text": "Rob the caravan (+1000 gold, -20 loyalty)",
+          "effects": { "gold": 1000, "loyalty": -20 }
+        }
+      ]
+    },
+    {
+      "id": "peasant-revolt",
+      "title": "Peasant Uprising!",
+      "description": "Low loyalty has sparked a revolt among your people.",
+      "options": [
+        {
+          "text": "Crush the rebellion (-100 population, +10 loyalty)",
+          "effects": { "population": -100, "loyalty": 10 }
+        },
+        {
+          "text": "Negotiate (-500 gold, +30 loyalty)",
+          "effects": { "gold": -500, "loyalty": 30 }
+        }
+      ]
+    },
+    {
+      "id": "plague",
+      "title": "Plague Outbreak",
+      "description": "A terrible disease spreads through your kingdom.",
+      "options": [
+        {
+          "text": "Quarantine affected areas (-30% population)",
+          "effects": { "populationPercent": -30 }
+        },
+        {
+          "text": "Seek magical cure (-1000 gold, -10% population)",
+          "effects": { "gold": -1000, "populationPercent": -10 }
+        }
+      ]
+    },
+    {
+      "id": "noble-dispute",
+      "title": "Noble Houses Feud",
+      "description": "Two powerful noble houses demand you take sides in their dispute.",
+      "options": [
+        {
+          "text": "Support House Valor",
+          "effects": { "loyalty": 10 },
+          "chainEvent": "valor-consequences"
+        },
+        {
+          "text": "Support House Wisdom",
+          "effects": { "gold": 200 },
+          "chainEvent": "wisdom-consequences"
+        },
+        {
+          "text": "Remain neutral (-10 loyalty)",
+          "effects": { "loyalty": -10 }
+        }
+      ]
+    },
+    {
+      "id": "merchant-visit",
+      "title": "Traveling Merchant",
+      "description": "A mysterious merchant offers rare goods.",
+      "options": [
+        {
+          "text": "Buy magical artifact (-300 gold, unlock new upgrade)",
+          "effects": { "gold": -300, "unlock": "magical-artifact" }
+        },
+        {
+          "text": "Pass on the offer",
+          "effects": {}
+        }
+      ]
+    },
+    {
+      "id": "festival",
+      "title": "Harvest Festival",
+      "description": "Your people wish to celebrate the harvest.",
+      "options": [
+        {
+          "text": "Fund the festival (-200 gold, +20 loyalty)",
+          "effects": { "gold": -200, "loyalty": 20 }
+        },
+        {
+          "text": "Small celebration (-50 gold, +5 loyalty)",
+          "effects": { "gold": -50, "loyalty": 5 }
+        },
+        {
+          "text": "Cancel festivities (+100 gold, -15 loyalty)",
+          "effects": { "gold": 100, "loyalty": -15 }
+        }
+      ]
+    },
+    {
+      "id": "tax-collection",
+      "title": "Tax Season",
+      "description": "Time to collect taxes from your subjects.",
+      "cooldown": 300000,
+      "options": [
+        {
+          "text": "Normal tax rate (+20% of current gold)",
+          "effects": { "goldPercent": 20 }
+        },
+        {
+          "text": "Heavy taxes (+40% gold, -10 loyalty)",
+          "effects": { "goldPercent": 40, "loyalty": -10 }
+        },
+        {
+          "text": "Tax relief (-5% gold, +15 loyalty)",
+          "effects": { "goldPercent": -5, "loyalty": 15 }
+        }
+      ]
+    },
+    {
+      "id": "royal-wedding",
+      "title": "Royal Wedding Invitation",
+      "description": "A neighboring kingdom invites you to a royal wedding.",
+      "image": "wedding.jpg",
+      "options": [
+        {
+          "text": "Attend with lavish gifts (-1000 gold, diplomatic bonus)",
+          "effects": { "gold": -1000, "diplomatic": 10 }
+        },
+        {
+          "text": "Send a representative (-200 gold)",
+          "effects": { "gold": -200 }
+        },
+        {
+          "text": "Decline the invitation (diplomatic penalty)",
+          "effects": { "diplomatic": -5 }
+        }
+      ]
+    },
+    {
+      "id": "loyalty-test",
+      "title": "Test of Loyalty",
+      "description": "Your loyalty influences available options.",
+      "loyaltyOptions": {
+        "90": [
+          { "text": "Rally the people (Double all income for 1 minute)", "effects": { "buff": "double-income" } },
+          { "text": "Inspire greatness (+50 to all stats)", "effects": { "gold": 50, "population": 50, "loyalty": 50 } }
+        ],
+        "50": [
+          { "text": "Standard response", "effects": {} }
+        ],
+        "20": [
+          { "text": "Desperately maintain control (-100 gold)", "effects": { "gold": -100 } }
+        ]
+      }
+    },
+    {
+      "id": "messenger-arrives",
+      "title": "Urgent Message",
+      "description": "A messenger brings news from afar. Quick, make a decision!",
+      "timed": true,
+      "timeout": 30000,
+      "options": [
+        {
+          "text": "Read immediately",
+          "effects": { "information": "war-warning" }
+        },
+        {
+          "text": "Dismiss the messenger",
+          "effects": {}
+        }
+      ]
+    },
+    {
+      "id": "trade-opportunity",
+      "title": "Exotic Trade Deal",
+      "description": "Merchants from the East offer a lucrative trade opportunity.",
+      "requirements": { "gold": 500, "hasUpgrade": "market" },
+      "options": [
+        {
+          "text": "Invest in the trade route (-500 gold, +50 gold/second)",
+          "effects": { "gold": -500, "passiveIncome": 50 }
+        },
+        {
+          "text": "Decline the offer",
+          "effects": {}
+        }
+      ]
+    },
+    {
+      "id": "diplomatic-crisis",
+      "title": "Border Dispute",
+      "description": "A neighboring kingdom claims your border territories.",
+      "options": [
+        {
+          "text": "Negotiate peacefully (Requires Diplomat)",
+          "requires": "diplomat",
+          "effects": { "diplomatic": 5 }
+        },
+        {
+          "text": "Show military strength (Requires General)",
+          "requires": "general", 
+          "effects": { "military": 10, "loyalty": 5 }
+        },
+        {
+          "text": "Concede the territory (-20% population)",
+          "effects": { "populationPercent": -20 }
+        }
+      ]
+    }
+  ]
+}

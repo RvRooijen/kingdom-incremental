@@ -1,0 +1,87 @@
+{
+  "testUsers": [
+    {
+      "id": "early-game-user",
+      "name": "Beginner",
+      "gameState": {
+        "gold": 50,
+        "population": 12,
+        "loyalty": 55,
+        "upgrades": ["farm"],
+        "advisors": [],
+        "prestigeLevel": 0,
+        "achievements": ["first-gold", "first-upgrade"]
+      }
+    },
+    {
+      "id": "mid-game-user",
+      "name": "Established Ruler",
+      "gameState": {
+        "gold": 10000,
+        "population": 150,
+        "loyalty": 70,
+        "upgrades": ["farm", "market", "blacksmith", "barracks", "temple"],
+        "advisors": ["treasurer", "general"],
+        "prestigeLevel": 0,
+        "achievements": ["first-gold", "first-upgrade", "population-100", "gold-10k"]
+      }
+    },
+    {
+      "id": "late-game-user",
+      "name": "Empire Builder",
+      "gameState": {
+        "gold": 50000000,
+        "population": 5000,
+        "loyalty": 85,
+        "upgrades": ["farm", "market", "blacksmith", "barracks", "temple", "university", "castle", "cathedral", "wizard-tower"],
+        "advisors": ["treasurer", "general", "spymaster", "diplomat", "architect"],
+        "prestigeLevel": 3,
+        "achievements": ["first-gold", "first-upgrade", "population-100", "gold-10k", "population-1000", "gold-1m", "all-advisors", "prestige-1"]
+      }
+    },
+    {
+      "id": "prestige-user", 
+      "name": "Ascended Monarch",
+      "gameState": {
+        "gold": 100,
+        "population": 20,
+        "loyalty": 60,
+        "upgrades": ["farm"],
+        "advisors": [],
+        "prestigeLevel": 5,
+        "prestigeBonuses": {
+          "goldMultiplier": 2.5,
+          "populationGrowth": 1.5,
+          "loyaltyDecay": 0.8
+        },
+        "achievements": ["first-gold", "first-upgrade", "prestige-1", "prestige-5"]
+      }
+    },
+    {
+      "id": "speedrun-user",
+      "name": "SpeedRunner",
+      "gameState": {
+        "gold": 25000,
+        "population": 200,
+        "loyalty": 65,
+        "upgrades": ["farm", "market", "blacksmith", "barracks"],
+        "advisors": ["treasurer"],
+        "gameTime": 900,
+        "clickCount": 5000,
+        "prestigeLevel": 1
+      }
+    }
+  ],
+  "leaderboardSeeds": [
+    { "name": "KingdomMaster", "score": 999999999, "prestigeLevel": 10 },
+    { "name": "GoldHoarder", "score": 50000000, "prestigeLevel": 5 },
+    { "name": "PopulationKing", "score": 25000000, "prestigeLevel": 4 },
+    { "name": "LoyaltyLord", "score": 10000000, "prestigeLevel": 3 },
+    { "name": "UpgradeExpert", "score": 5000000, "prestigeLevel": 2 },
+    { "name": "AdvisorGeneral", "score": 1000000, "prestigeLevel": 2 },
+    { "name": "EventMaster", "score": 500000, "prestigeLevel": 1 },
+    { "name": "ClickWarrior", "score": 100000, "prestigeLevel": 1 },
+    { "name": "NewbieRuler", "score": 50000, "prestigeLevel": 0 },
+    { "name": "FirstTimer", "score": 10000, "prestigeLevel": 0 }
+  ]
+}
