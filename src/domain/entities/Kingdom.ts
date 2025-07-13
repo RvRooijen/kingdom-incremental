@@ -52,6 +52,7 @@ export class Kingdom extends AggregateRoot {
     this._resourceMap.set(ResourceType.GOLD, 100);
   }
 
+
   get name(): string {
     return this._name;
   }
@@ -323,5 +324,74 @@ export class Kingdom extends AggregateRoot {
 
   getAchievementMultiplier(resource: ResourceType): number {
     return this._achievementMultipliers.get(resource) || 1;
+  }
+
+  // Factory method to reconstruct Kingdom from stored data
+  static fromStoredData(data: any): Kingdom {
+    const kingdom = new Kingdom(data.name);
+    
+    // Set the ID using reflection to bypass readonly
+    (kingdom as any)._id = data.id;
+    
+    // Restore resources (old format)
+    if (data.resources) {
+      (kingdom as any)._resources = data.resources;
+    }
+    
+    // Restore resource map (new format)
+    if (data.resourceMap) {
+      kingdom._resourceMap = new Map(data.resourceMap);
+    }
+    
+    // Restore court
+    if (data.court) {
+      (kingdom as any)._court = data.court;
+    }
+    
+    // Restore factions
+    if (data.factions) {
+      kingdom._factions.clear();
+      // Handle both array format and object format
+      if (Array.isArray(data.factions)) {
+        // Handle array format from save method
+        for (const factionData of data.factions) {
+          if (factionData.key && factionData.type) {
+            const faction = new Faction(factionData.type, factionData.name);
+            faction.setApprovalRating(factionData.approvalRating || 50);
+            kingdom._factions.set(factionData.key, faction);
+          } else if (Array.isArray(factionData)) {
+            // Handle [key, faction] tuple format
+            const [key, faction] = factionData;
+            kingdom._factions.set(key, faction);
+          }
+        }
+      } else {
+        // Handle old Map entries format
+        for (const [name, faction] of data.factions) {
+          kingdom._factions.set(name, faction);
+        }
+      }
+    }
+    
+    // Restore prestige and events
+    kingdom._prestigeLevel = data.prestigeLevel || 0;
+    kingdom._completedEventsCount = data.completedEventsCount || 0;
+    
+    // Restore last calculation time
+    if (data.lastCalculation) {
+      kingdom._lastCalculation = data.lastCalculation;
+    }
+    
+    // Restore advisors
+    if (data.advisors) {
+      (kingdom as any)._advisors = data.advisors;
+    }
+    
+    // Restore characters
+    if (data.characters) {
+      (kingdom as any)._characters = data.characters;
+    }
+    
+    return kingdom;
   }
 }

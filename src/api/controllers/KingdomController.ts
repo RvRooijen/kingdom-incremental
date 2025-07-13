@@ -6,6 +6,7 @@ import { IKingdomRepository } from '../../application/interfaces/IKingdomReposit
 import { IUnitOfWork } from '../../application/interfaces/IUnitOfWork';
 import { Kingdom } from '../../domain/entities/Kingdom';
 import { VercelKVRepository } from '../../infrastructure/repositories/VercelKVRepository';
+import { ResourceType } from '../../domain/value-objects/ResourceType';
 
 // Mock implementation of IKingdomRepository
 class MockKingdomRepository implements IKingdomRepository {
@@ -15,16 +16,8 @@ class MockKingdomRepository implements IKingdomRepository {
     const stored = this.kingdoms.get(id);
     if (!stored) return null;
     
-    // Reconstruct the kingdom from stored data
-    const kingdom = new Kingdom(stored.name);
-    (kingdom as any).id = stored.id;
-    (kingdom as any).resources = stored.resources;
-    (kingdom as any).court = stored.court;
-    (kingdom as any).factions = new Map(stored.factions);
-    (kingdom as any).prestigeLevel = stored.prestigeLevel || 0;
-    (kingdom as any)._completedEventsCount = stored.completedEventsCount || 0;
-    
-    return kingdom;
+    // Use the static factory method to reconstruct the kingdom
+    return Kingdom.fromStoredData(stored);
   }
 
   async findByName(name: string): Promise<Kingdom | null> {
@@ -37,19 +30,38 @@ class MockKingdomRepository implements IKingdomRepository {
   }
 
   async save(kingdom: Kingdom): Promise<void> {
-    // Create a deep copy to preserve the state
-    const kingdomCopy = JSON.parse(JSON.stringify({
+    // Create a serialized version with all necessary data
+    const kingdomData = {
       id: kingdom.id,
       name: kingdom.name,
-      resources: kingdom.resources,
+      resources: {
+        gold: kingdom.resources.gold,
+        influence: kingdom.resources.influence,
+        loyalty: kingdom.resources.loyalty,
+        population: kingdom.resources.population,
+        militaryPower: kingdom.resources.militaryPower
+      },
+      resourceMap: [
+        [ResourceType.GOLD, kingdom.getResource(ResourceType.GOLD)],
+        [ResourceType.INFLUENCE, kingdom.getResource(ResourceType.INFLUENCE)],
+        [ResourceType.FAITH, kingdom.getResource(ResourceType.FAITH)],
+        [ResourceType.KNOWLEDGE, kingdom.getResource(ResourceType.KNOWLEDGE)]
+      ],
       court: kingdom.court,
-      factions: Array.from(kingdom.factions.entries()),
+      factions: Array.from(kingdom.factions.entries()).map(([key, faction]) => ({
+        key,
+        type: faction.type,
+        name: faction.name,
+        approvalRating: faction.approvalRating,
+        mood: faction.mood
+      })),
       prestigeLevel: kingdom.prestigeLevel || 0,
-      completedEventsCount: kingdom.completedEventsCount || 0
-    }));
+      completedEventsCount: kingdom.completedEventsCount || 0,
+      lastCalculation: kingdom.getLastCalculation()
+    };
     
     // Store the serialized version
-    this.kingdoms.set(kingdom.id, kingdomCopy as any);
+    this.kingdoms.set(kingdom.id, kingdomData as any);
   }
   
   async exists(id: string): Promise<boolean> {

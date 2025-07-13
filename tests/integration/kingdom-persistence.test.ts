@@ -39,10 +39,11 @@ describe('Kingdom Persistence Integration', () => {
   });
 
   test('should maintain kingdom state between requests', async () => {
-    // Create a kingdom
+    // Create a kingdom with unique name
+    const uniqueName = `State Test Kingdom ${Date.now()}`;
     const createResponse = await request(app)
       .post('/api/kingdoms')
-      .send({ kingdomName: kingdomName, rulerName: 'Test Ruler' })
+      .send({ kingdomName: uniqueName, rulerName: 'Test Ruler' })
       .expect(201);
 
     kingdomId = createResponse.body.kingdomId;

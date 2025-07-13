@@ -86,6 +86,9 @@ export class VercelKVRepository implements IKingdomRepository {
   }
 
   private serializeKingdom(kingdom: Kingdom): any {
+    // Import ResourceType for serialization
+    const { ResourceType } = require('../../domain/value-objects/ResourceType');
+    
     // Convert Kingdom to plain object for storage
     return {
       id: kingdom.id,
@@ -97,6 +100,12 @@ export class VercelKVRepository implements IKingdomRepository {
         population: kingdom.resources.population,
         militaryPower: kingdom.resources.militaryPower
       },
+      resourceMap: [
+        [ResourceType.GOLD, kingdom.getResource(ResourceType.GOLD)],
+        [ResourceType.INFLUENCE, kingdom.getResource(ResourceType.INFLUENCE)],
+        [ResourceType.FAITH, kingdom.getResource(ResourceType.FAITH)],
+        [ResourceType.KNOWLEDGE, kingdom.getResource(ResourceType.KNOWLEDGE)]
+      ],
       court: {
         king: {
           name: kingdom.court.king.name,
@@ -115,18 +124,14 @@ export class VercelKVRepository implements IKingdomRepository {
         approvalRating: faction.approvalRating,
         mood: faction.mood
       })),
-      lastCalculation: new Date().toISOString()
+      prestigeLevel: kingdom.prestigeLevel || 0,
+      completedEventsCount: kingdom.completedEventsCount || 0,
+      lastCalculation: kingdom.getLastCalculation()
     };
   }
 
   private deserializeKingdom(data: any): Kingdom {
-    // Reconstruct Kingdom from stored data
-    const kingdom = new Kingdom(data.name);
-    
-    // This is simplified - in reality you'd need to properly reconstruct
-    // the domain object with all its methods and state
-    Object.assign(kingdom, data);
-    
-    return kingdom;
+    // Use the static factory method to properly reconstruct the kingdom
+    return Kingdom.fromStoredData(data);
   }
 }
