@@ -18,44 +18,52 @@ let gameState = {
 // API base URL
 const API_BASE = '/api';
 
-// DOM elements
-const elements = {
-    status: document.getElementById('status'),
-    startScreen: document.getElementById('start-screen'),
-    gameScreen: document.getElementById('game-screen'),
-    createKingdomForm: document.getElementById('create-kingdom-form'),
-    
-    // Resources
-    gold: document.getElementById('gold'),
-    goldRate: document.getElementById('gold-rate'),
-    influence: document.getElementById('influence'),
-    influenceRate: document.getElementById('influence-rate'),
-    loyalty: document.getElementById('loyalty'),
-    population: document.getElementById('population'),
-    militaryPower: document.getElementById('military-power'),
-    
-    // Court
-    kingName: document.getElementById('king-name'),
-    queenName: document.getElementById('queen-name'),
-    advisors: document.getElementById('advisors'),
-    
-    // Other
-    factions: document.getElementById('factions'),
-    events: document.getElementById('events'),
-    kingdomDisplayName: document.getElementById('kingdom-display-name'),
-    prestigeLevel: document.getElementById('prestige-level'),
-    calculateTickBtn: document.getElementById('calculate-tick'),
-    
-    // Modal
-    eventModal: document.getElementById('event-modal'),
-    eventTitle: document.getElementById('event-title'),
-    eventDescription: document.getElementById('event-description'),
-    eventChoices: document.getElementById('event-choices')
-};
+// DOM elements - will be populated after DOM loads
+let elements = {};
+
+// Initialize DOM elements
+function initializeElements() {
+    elements = {
+        status: document.getElementById('status'),
+        startScreen: document.getElementById('start-screen'),
+        gameScreen: document.getElementById('game-screen'),
+        createKingdomForm: document.getElementById('create-kingdom-form'),
+        
+        // Resources
+        gold: document.getElementById('gold'),
+        goldRate: document.getElementById('gold-rate'),
+        influence: document.getElementById('influence'),
+        influenceRate: document.getElementById('influence-rate'),
+        loyalty: document.getElementById('loyalty'),
+        population: document.getElementById('population'),
+        militaryPower: document.getElementById('military-power'),
+        
+        // Court
+        kingName: document.getElementById('king-name'),
+        queenName: document.getElementById('queen-name'),
+        advisors: document.getElementById('advisors'),
+        
+        // Other
+        factions: document.getElementById('factions'),
+        events: document.getElementById('events'),
+        kingdomDisplayName: document.getElementById('kingdom-display-name'),
+        prestigeLevel: document.getElementById('prestige-level'),
+        calculateTickBtn: document.getElementById('calculate-tick'),
+        
+        // Modal
+        eventModal: document.getElementById('event-modal'),
+        eventTitle: document.getElementById('event-title'),
+        eventDescription: document.getElementById('event-description'),
+        eventChoices: document.getElementById('event-choices')
+    };
+}
 
 // Update status message
 function updateStatus(message, type = 'info') {
-    if (!elements.status) return;
+    if (!elements.status) {
+        console.error('Status element not found!');
+        return;
+    }
     
     elements.status.textContent = message;
     elements.status.className = 'status';
@@ -79,12 +87,22 @@ function updateStatus(message, type = 'info') {
 
 // Initialize game
 async function init() {
+    // Initialize DOM elements
+    initializeElements();
+    
     // Initialize statistics
     initializeStatistics();
     
     // Setup event listeners
-    elements.createKingdomForm.addEventListener('submit', handleCreateKingdom);
-    elements.calculateTickBtn.addEventListener('click', calculateTick);
+    if (elements.createKingdomForm) {
+        elements.createKingdomForm.addEventListener('submit', handleCreateKingdom);
+    } else {
+        console.error('Create kingdom form not found!');
+    }
+    
+    if (elements.calculateTickBtn) {
+        elements.calculateTickBtn.addEventListener('click', calculateTick);
+    }
     
     // Check if we have a saved kingdom ID
     const savedKingdomId = localStorage.getItem('currentKingdomId');
@@ -131,7 +149,6 @@ async function handleCreateKingdom(e) {
         }
         
         const data = await response.json();
-        console.log('Create kingdom response:', data);
         
         if (!data.kingdomId) {
             throw new Error('Server returned invalid data. Please try again.');
