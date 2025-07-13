@@ -80,9 +80,9 @@ export class Kingdom extends AggregateRoot {
     return factions;
   }
 
-  calculateResourceGeneration(timeElapsedSeconds: number): Resources {
+  async calculateResourceGeneration(timeElapsedSeconds: number): Promise<Resources> {
     // Update resource generation with new system
-    const progress = this._resourceGenerator.calculateOfflineProgress(this, timeElapsedSeconds);
+    const progress = await this._resourceGenerator.calculateOfflineProgress(this, timeElapsedSeconds);
     
     for (const [resource, amount] of progress) {
       this.addResource(resource, amount);
@@ -91,7 +91,7 @@ export class Kingdom extends AggregateRoot {
     this._lastCalculation = Date.now();
     
     // Return generated resources in old format for compatibility
-    const generatedResources = this._resourceGenerator.generateResources(this, timeElapsedSeconds);
+    const generatedResources = await this._resourceGenerator.generateResources(this, timeElapsedSeconds);
     this._resources = this._resources.add(generatedResources);
     return generatedResources;
   }
@@ -211,8 +211,8 @@ export class Kingdom extends AggregateRoot {
   }
 
 
-  getGenerationRates(): Map<ResourceType, number> {
-    return this._resourceGenerator.calculateGenerationRates(this);
+  async getGenerationRates(): Promise<Map<ResourceType, number>> {
+    return await this._resourceGenerator.calculateGenerationRates(this);
   }
 
   getLastCalculation(): number {

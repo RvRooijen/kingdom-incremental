@@ -1,8 +1,8 @@
 import { Kingdom } from '../entities/Kingdom';
 import { ResourceType } from '../value-objects/ResourceType';
-import { CharacterType } from '../value-objects/CharacterType';
-import { AdvisorType } from '../value-objects/AdvisorType';
 import { Resources } from '../value-objects/Resources';
+import { GameConfig } from '../entities/GameConfig';
+import { ConfigService } from '../../application/services/ConfigService';
 
 export class ResourceGenerator {
   private static readonly RESOURCE_LIMITS = new Map<ResourceType, number>([
@@ -12,55 +12,71 @@ export class ResourceGenerator {
     [ResourceType.KNOWLEDGE, 10000],
   ]);
 
-  private static readonly CHARACTER_GENERATION = new Map<CharacterType, Map<ResourceType, number>>([
-    [CharacterType.KING, new Map([[ResourceType.GOLD, 1]])],
-    [CharacterType.QUEEN, new Map([[ResourceType.INFLUENCE, 1]])],
-  ]);
 
-  private static readonly ADVISOR_BONUSES = new Map<AdvisorType, { resource: ResourceType; bonus: number }>([
-    [AdvisorType.TREASURER, { resource: ResourceType.GOLD, bonus: 0.5 }],
-  ]);
+  private configService: ConfigService;
+  private config: GameConfig | null = null;
 
-  calculateGenerationRates(kingdom: Kingdom): Map<ResourceType, number> {
-    const rates = new Map<ResourceType, number>([
-      [ResourceType.GOLD, 0],
-      [ResourceType.INFLUENCE, 0],
-      [ResourceType.FAITH, 0],
-      [ResourceType.KNOWLEDGE, 0],
-    ]);
+  constructor() {
+    this.configService = ConfigService.getInstance();
+  }
 
-    // Calculate base generation from characters
-    const characters = kingdom.getCharacters();
-    for (const character of characters) {
-      const generation = ResourceGenerator.CHARACTER_GENERATION.get(character.type);
-      if (generation) {
-        for (const [resource, amount] of generation) {
-          rates.set(resource, (rates.get(resource) || 0) + amount);
-        }
-      }
+  private async getConfig(): Promise<GameConfig> {
+    if (!this.config) {
+      this.config = await this.configService.getConfig();
+    }
+    return this.config;
+  }
+
+  async calculateGenerationRates(kingdom: Kingdom): Promise<Map<ResourceType, number>> {
+    const config = await this.getConfig();
+    const rates = new Map<ResourceType, number>();
+
+    // Initialize rates from config
+    for (const [resourceType, resourceConfig] of config.resources) {
+      rates.set(resourceType, resourceConfig.baseGenerationRate);
     }
 
-    // Apply advisor bonuses
+    // Apply advisor bonuses from config
     const advisors = kingdom.getAdvisors();
     for (const advisor of advisors) {
-      const bonus = ResourceGenerator.ADVISOR_BONUSES.get(advisor.type);
-      if (bonus) {
-        const currentRate = rates.get(bonus.resource) || 0;
-        rates.set(bonus.resource, currentRate * (1 + bonus.bonus));
+      const advisorConfig = config.advisors.get(advisor.type);
+      if (advisorConfig) {
+        // Apply bonus to all resources based on advisor type
+        for (const [resourceType, currentRate] of rates) {
+          const resourceConfig = config.resources.get(resourceType);
+          if (resourceConfig) {
+            rates.set(resourceType, currentRate * advisorConfig.effectMultiplier);
+          }
+        }
       }
     }
 
     // Apply prestige bonus to all resources
     const prestigeBonuses = kingdom.getPrestigeBonuses();
     for (const [resource, rate] of rates) {
-      rates.set(resource, rate * prestigeBonuses.resourceMultiplier);
+      const resourceConfig = config.resources.get(resource);
+      if (resourceConfig) {
+        rates.set(resource, rate * prestigeBonuses.resourceMultiplier * resourceConfig.prestigeMultiplier);
+      }
+    }
+
+    // Apply faction bonuses
+    for (const faction of config.factions) {
+      const factionEntity = kingdom.factions.get(faction.name);
+      if (factionEntity && factionEntity.approvalRating > 50) {
+        const factionBonus = (factionEntity.approvalRating - 50) / 100; // 0 to 0.5 bonus
+        for (const bonus of faction.bonuses) {
+          const currentRate = rates.get(bonus.resourceType) || 0;
+          rates.set(bonus.resourceType, currentRate * (1 + factionBonus * (bonus.multiplier - 1)));
+        }
+      }
     }
 
     return rates;
   }
 
-  calculateOfflineProgress(kingdom: Kingdom, seconds: number): Map<ResourceType, number> {
-    const rates = this.calculateGenerationRates(kingdom);
+  async calculateOfflineProgress(kingdom: Kingdom, seconds: number): Promise<Map<ResourceType, number>> {
+    const rates = await this.calculateGenerationRates(kingdom);
     const progress = new Map<ResourceType, number>();
 
     for (const [resource, rate] of rates) {
@@ -76,8 +92,8 @@ export class ResourceGenerator {
   }
 
   // Legacy method for compatibility with existing code
-  generateResources(kingdom: Kingdom, timeElapsedSeconds: number): Resources {
-    const rates = this.calculateGenerationRates(kingdom);
+  async generateResources(kingdom: Kingdom, timeElapsedSeconds: number): Promise<Resources> {
+    const rates = await this.calculateGenerationRates(kingdom);
     
     const goldGeneration = (rates.get(ResourceType.GOLD) || 0) * timeElapsedSeconds;
     const influenceGeneration = (rates.get(ResourceType.INFLUENCE) || 0) * timeElapsedSeconds;

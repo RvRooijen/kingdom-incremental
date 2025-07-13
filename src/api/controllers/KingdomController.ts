@@ -171,7 +171,7 @@ export class KingdomController {
       }
       
       // Calculate resource generation (1 second tick)
-      kingdom.calculateResourceGeneration(1);
+      await kingdom.calculateResourceGeneration(1);
       
       // Save the updated kingdom
       await this.kingdomRepository.save(kingdom);

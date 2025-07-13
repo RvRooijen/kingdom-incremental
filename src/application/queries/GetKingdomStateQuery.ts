@@ -1,5 +1,6 @@
 import { KingdomStateDto } from '../dtos/KingdomStateDto';
 import { IKingdomRepository } from '../interfaces/IKingdomRepository';
+import { ResourceType } from '../../domain/value-objects/ResourceType';
 
 export class GetKingdomStateQuery {
   constructor(
@@ -16,6 +17,9 @@ export class GetKingdomStateQuery {
       return null;
     }
 
+    // Get generation rates from kingdom
+    const generationRates = await kingdom.getGenerationRates();
+    
     // Map domain entities to match frontend expectations
     const kingdomData: any = {
       id: kingdom.id,
@@ -49,10 +53,10 @@ export class GetKingdomStateQuery {
       prestigeLevel: kingdom.prestigeLevel || 0,
       completedEventsCount: kingdom.completedEventsCount || 0,
       generationRates: {
-        gold: 1,
-        influence: 1,
-        faith: 0,
-        knowledge: 0
+        gold: generationRates.get(ResourceType.GOLD) || 0,
+        influence: generationRates.get(ResourceType.INFLUENCE) || 0,
+        faith: generationRates.get(ResourceType.FAITH) || 0,
+        knowledge: generationRates.get(ResourceType.KNOWLEDGE) || 0
       }
     };
 

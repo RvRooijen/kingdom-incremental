@@ -4,8 +4,9 @@ import { MakeEventChoiceCommand } from '../../application/commands/MakeEventChoi
 import { IKingdomRepository } from '../../application/interfaces/IKingdomRepository';
 import { IEventRepository } from '../../application/interfaces/IEventRepository';
 import { IUnitOfWork } from '../../application/interfaces/IUnitOfWork';
-import { EventDto } from '../../application/dtos/EventDto';
 import { Kingdom } from '../../domain/entities/Kingdom';
+import { ConfigEventRepository } from '../../infrastructure/repositories/ConfigEventRepository';
+import { VercelKVRepository } from '../../infrastructure/repositories/VercelKVRepository';
 
 // Mock implementation of IKingdomRepository (reuse from KingdomController)
 class MockKingdomRepository implements IKingdomRepository {
@@ -37,115 +38,6 @@ class MockKingdomRepository implements IKingdomRepository {
   }
 }
 
-// Mock implementation of IEventRepository
-class MockEventRepository implements IEventRepository {
-  private events = new Map<string, any>();
-  private activeEvents = new Map<string, EventDto[]>(); // kingdomId -> active events
-
-  constructor() {
-    // Initialize with some mock events
-    const merchantEvent = {
-      id: 'event-1',
-      type: 'Economic',
-      title: 'A merchant arrives',
-      description: 'A traveling merchant offers rare goods',
-      choices: [
-        {
-          id: 'choice-1',
-          description: 'Buy supplies (-50 gold, +20 wood)',
-          requirements: { gold: 50 }
-        },
-        {
-          id: 'choice-2',
-          description: 'Decline politely',
-          requirements: {}
-        }
-      ]
-    };
-    this.events.set(merchantEvent.id, merchantEvent);
-
-    const banditEvent = {
-      id: 'event-2',
-      type: 'Military',
-      title: 'Bandits at the gates!',
-      description: 'A group of bandits demands tribute',
-      choices: [
-        {
-          id: 'choice-1',
-          description: 'Pay them off (-100 gold)',
-          requirements: { gold: 100 }
-        },
-        {
-          id: 'choice-2',
-          description: 'Fight them (-10 population)',
-          requirements: { militaryPower: 20 }
-        }
-      ]
-    };
-    this.events.set(banditEvent.id, banditEvent);
-  }
-
-  async findById(id: string): Promise<EventDto | null> {
-    const event = this.events.get(id);
-    if (!event) return null;
-    
-    return {
-      ...event,
-      expiresInTurns: 3
-    };
-  }
-  
-  async save(event: EventDto): Promise<void> {
-    this.events.set(event.id, event);
-  }
-
-  async findActiveEvents(kingdomId: string): Promise<EventDto[]> {
-    // Return mock active events for the kingdom
-    const events = this.activeEvents.get(kingdomId) || [];
-    if (events.length === 0) {
-      // Generate a random event
-      const eventArray = Array.from(this.events.values());
-      const randomEvent = eventArray[Math.floor(Math.random() * eventArray.length)];
-      const eventDto: EventDto = {
-        id: randomEvent.id,
-        type: randomEvent.type as any,
-        title: randomEvent.title,
-        description: randomEvent.description,
-        choices: randomEvent.choices,
-        expiresInTurns: 3
-      };
-      events.push(eventDto);
-      this.activeEvents.set(kingdomId, events);
-    }
-    return events;
-  }
-
-  async markAsProcessed(eventId: string, kingdomId: string): Promise<void> {
-    const events = this.activeEvents.get(kingdomId) || [];
-    const filteredEvents = events.filter(e => e.id !== eventId);
-    this.activeEvents.set(kingdomId, filteredEvents);
-  }
-  
-  async findByChainId(_chainId: string): Promise<EventDto[]> {
-    // Mock implementation
-    return [];
-  }
-  
-  async saveChainChoice(_kingdomId: string, _chainId: string, _choice: any): Promise<void> {
-    // Mock implementation
-  }
-  
-  async getChainChoices(_kingdomId: string, _chainId: string): Promise<any[]> {
-    // Mock implementation
-    return [];
-  }
-  
-  async isChainComplete(_kingdomId: string, _chainId: string): Promise<boolean> {
-    // Mock implementation
-    return false;
-  }
-}
-
 // Mock implementation of IUnitOfWork
 class MockUnitOfWork implements IUnitOfWork {
   async begin(): Promise<void> {
@@ -169,15 +61,26 @@ export class EventController {
   private unitOfWork: IUnitOfWork;
 
   constructor() {
-    this.kingdomRepository = new MockKingdomRepository();
-    this.eventRepository = new MockEventRepository();
+    // Use Vercel KV in production, mock in development
+    const useVercelKV = process.env['KV_REST_API_URL'] && process.env['NODE_ENV'] === 'production';
+    
+    this.kingdomRepository = useVercelKV 
+      ? new VercelKVRepository()
+      : new MockKingdomRepository();
+      
+    // Use ConfigEventRepository to load events from GameConfig
+    this.eventRepository = new ConfigEventRepository();
     this.unitOfWork = new MockUnitOfWork();
+    
     this.getActiveEventsQuery = new GetActiveEventsQuery(this.eventRepository);
     this.makeEventChoiceCommand = new MakeEventChoiceCommand(
       this.kingdomRepository,
       this.eventRepository,
       this.unitOfWork
     );
+    
+    console.log(`Using ${useVercelKV ? 'Vercel KV' : 'Mock'} kingdom repository`);
+    console.log('Using ConfigEventRepository for events');
   }
 
   getEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -249,6 +152,40 @@ export class EventController {
         res.status(400).json({ error: error.message });
         return;
       }
+      next(error);
+    }
+  };
+
+  activateRandomEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id: kingdomId } = req.params;
+      
+      if (!kingdomId) {
+        res.status(400).json({ error: 'Kingdom ID is required' });
+        return;
+      }
+      
+      // Get the kingdom
+      const kingdom = await this.kingdomRepository.findById(kingdomId);
+      if (!kingdom) {
+        res.status(404).json({ error: 'Kingdom not found' });
+        return;
+      }
+      
+      // Activate random events based on game config
+      if (this.eventRepository instanceof ConfigEventRepository) {
+        await this.eventRepository.activateRandomEvents(kingdomId, kingdom, 3);
+      }
+      
+      // Get the newly activated events
+      const activeEvents = await this.getActiveEventsQuery.execute(kingdomId);
+      
+      res.json({ 
+        success: true,
+        message: `Activated ${activeEvents.length} events`,
+        events: activeEvents 
+      });
+    } catch (error) {
       next(error);
     }
   };
