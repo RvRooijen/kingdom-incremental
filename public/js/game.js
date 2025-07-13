@@ -18,8 +18,61 @@ let gameState = {
 // API base URL
 const API_BASE = '/api';
 
+// Helper function to check if API is accessible
+async function checkAPIConnection() {
+    try {
+        const response = await fetch('/health', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return response.ok;
+    } catch (error) {
+        console.error('API connection check failed:', error);
+        return false;
+    }
+}
+
 // DOM elements - will be populated after DOM loads
 let elements = {};
+
+// Initialize statistics
+function initializeStatistics() {
+    if (!gameState.statistics.startTime) {
+        gameState.statistics.startTime = Date.now();
+    }
+    
+    // Initialize faction history for all factions
+    const factionTypes = ['Nobility', 'Merchants', 'Military', 'Clergy', 'Commoners'];
+    for (const faction of factionTypes) {
+        if (!gameState.statistics.factionHistory[faction]) {
+            gameState.statistics.factionHistory[faction] = [];
+        }
+    }
+}
+
+// Check API connection
+async function checkAPIConnection() {
+    try {
+        const response = await fetch('/health', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API health check:', data);
+            return true;
+        }
+        
+        console.error('API health check failed:', response.status);
+        return false;
+    } catch (error) {
+        console.error('API connection error:', error);
+        return false;
+    }
+}
 
 // Initialize DOM elements
 function initializeElements() {
@@ -87,37 +140,63 @@ function updateStatus(message, type = 'info') {
 
 // Initialize game
 async function init() {
-    // Initialize DOM elements
-    initializeElements();
-    
-    // Initialize statistics
-    initializeStatistics();
-    
-    // Setup event listeners
-    if (elements.createKingdomForm) {
-        elements.createKingdomForm.addEventListener('submit', handleCreateKingdom);
-    } else {
-        console.error('Create kingdom form not found!');
-    }
-    
-    if (elements.calculateTickBtn) {
-        elements.calculateTickBtn.addEventListener('click', calculateTick);
-    }
-    
-    // Check if we have a saved kingdom ID
-    const savedKingdomId = localStorage.getItem('currentKingdomId');
-    if (savedKingdomId) {
-        gameState.kingdomId = savedKingdomId;
-        try {
-            await loadKingdom();
-            // Status will be updated by loadKingdom
-        } catch (error) {
-            console.error('Failed to load saved kingdom:', error);
-            localStorage.removeItem('currentKingdomId');
+    try {
+        console.log('Starting game initialization...');
+        console.log('Current URL:', window.location.href);
+        console.log('API Base:', API_BASE);
+        
+        // Initialize DOM elements
+        initializeElements();
+        console.log('DOM elements initialized');
+        console.log('Status element:', elements.status);
+        
+        // Check API connection
+        console.log('Checking API connection...');
+        const apiConnected = await checkAPIConnection();
+        if (!apiConnected) {
+            console.warn('API connection check failed - continuing anyway');
+        }
+        
+        // Initialize statistics
+        initializeStatistics();
+        console.log('Statistics initialized');
+        
+        // Setup event listeners
+        if (elements.createKingdomForm) {
+            elements.createKingdomForm.addEventListener('submit', handleCreateKingdom);
+            console.log('Create kingdom form listener added');
+        } else {
+            console.error('Create kingdom form not found!');
+        }
+        
+        if (elements.calculateTickBtn) {
+            elements.calculateTickBtn.addEventListener('click', calculateTick);
+            console.log('Calculate tick button listener added');
+        }
+        
+        // Check if we have a saved kingdom ID
+        const savedKingdomId = localStorage.getItem('currentKingdomId');
+        console.log('Saved kingdom ID:', savedKingdomId);
+        
+        if (savedKingdomId) {
+            gameState.kingdomId = savedKingdomId;
+            try {
+                await loadKingdom();
+                // Status will be updated by loadKingdom
+            } catch (error) {
+                console.error('Failed to load saved kingdom:', error);
+                localStorage.removeItem('currentKingdomId');
+                updateStatus('Ready to play');
+            }
+        } else {
             updateStatus('Ready to play');
         }
-    } else {
-        updateStatus('Ready to play');
+        
+        console.log('Game initialization complete');
+    } catch (error) {
+        console.error('Error during initialization:', error);
+        console.error('Error stack:', error.stack);
+        updateStatus('Initialization error. Please refresh the page.', 'error');
     }
 }
 
@@ -705,6 +784,8 @@ function updateGenerationRates() {
     };
 }
 
+// Initialize statistics
+function initializeStatistics() {
     const saved = localStorage.getItem('kingdomStatistics');
     if (saved) {
         try {
@@ -817,6 +898,12 @@ function closeStatistics() {
 }
 
 function createResourceGrowthChart() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    
     const ctx = document.getElementById('resource-growth-chart').getContext('2d');
     const history = gameState.statistics.resourceHistory;
     
@@ -882,6 +969,12 @@ function createResourceGrowthChart() {
 }
 
 function createFactionApprovalChart() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    
     const ctx = document.getElementById('faction-approval-chart').getContext('2d');
     const factionHistory = gameState.statistics.factionHistory;
     
@@ -951,6 +1044,12 @@ function createFactionApprovalChart() {
 }
 
 function createResourceDistributionChart() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    
     const ctx = document.getElementById('resource-distribution-chart').getContext('2d');
     
     if (gameState.charts.resourceDistribution) {
@@ -1026,6 +1125,11 @@ function showPrestigeModal() {
     document.getElementById('prestige-modal').classList.remove('hidden');
 }
 
+// Alias for showPrestigeModal (used in HTML onclick)
+function openPrestigeModal() {
+    showPrestigeModal();
+}
+
 function closePrestigeModal() {
     document.getElementById('prestige-modal').classList.add('hidden');
 }
@@ -1094,14 +1198,14 @@ async function performPrestige() {
         closePrestigeModal();
         
         // Show success message
-        showStatus(`Prestige successful! You are now prestige level ${result.prestigeLevel}`, 'success');
+        updateStatus(`Prestige successful! You are now prestige level ${result.prestigeLevel}`, 'success');
         
         // Reload kingdom state
         await loadKingdom();
         
     } catch (error) {
         console.error('Prestige error:', error);
-        showStatus(error.message || 'Failed to perform prestige', 'error');
+        updateStatus(error.message || 'Failed to perform prestige', 'error');
     }
 }
 
@@ -1113,5 +1217,13 @@ function updatePrestigeButton() {
     }
 }
 
-// Start the game when DOM is loaded
-document.addEventListener('DOMContentLoaded', init);
+// Open prestige modal (alias for showPrestigeModal)
+function openPrestigeModal() {
+    showPrestigeModal();
+}
+
+// Initialize the game when the script loads
+init().catch(error => {
+    console.error('Failed to initialize game:', error);
+    updateStatus('Failed to initialize game. Please refresh the page.', 'error');
+});
