@@ -126,6 +126,13 @@ export class GameConfig {
         prestigeMultiplier: 1.3,
         baseCost: 300,
         costMultiplier: 2
+      }],
+      [ResourceType.LOYALTY, {
+        baseGenerationRate: 0.2,
+        advisorMultiplier: 3,
+        prestigeMultiplier: 1.1,
+        baseCost: 100,
+        costMultiplier: 1.5
       }]
     ]);
 

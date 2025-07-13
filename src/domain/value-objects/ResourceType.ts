@@ -3,4 +3,5 @@ export enum ResourceType {
   INFLUENCE = 'INFLUENCE',
   FAITH = 'FAITH',
   KNOWLEDGE = 'KNOWLEDGE',
+  LOYALTY = 'LOYALTY',
 }

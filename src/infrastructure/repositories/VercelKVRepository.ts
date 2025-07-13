@@ -104,7 +104,8 @@ export class VercelKVRepository implements IKingdomRepository {
         [ResourceType.GOLD, kingdom.getResource(ResourceType.GOLD)],
         [ResourceType.INFLUENCE, kingdom.getResource(ResourceType.INFLUENCE)],
         [ResourceType.FAITH, kingdom.getResource(ResourceType.FAITH)],
-        [ResourceType.KNOWLEDGE, kingdom.getResource(ResourceType.KNOWLEDGE)]
+        [ResourceType.KNOWLEDGE, kingdom.getResource(ResourceType.KNOWLEDGE)],
+        [ResourceType.LOYALTY, kingdom.getResource(ResourceType.LOYALTY)]
       ],
       court: {
         king: {

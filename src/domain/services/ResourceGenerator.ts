@@ -3,6 +3,7 @@ import { ResourceType } from '../value-objects/ResourceType';
 import { Resources } from '../value-objects/Resources';
 import { GameConfig } from '../entities/GameConfig';
 import { ConfigService } from '../../application/services/ConfigService';
+import { AdvisorType } from '../value-objects/AdvisorType';
 
 export class ResourceGenerator {
   private static readonly RESOURCE_LIMITS = new Map<ResourceType, number>([
@@ -10,6 +11,7 @@ export class ResourceGenerator {
     [ResourceType.INFLUENCE, 10000],
     [ResourceType.FAITH, 10000],
     [ResourceType.KNOWLEDGE, 10000],
+    [ResourceType.LOYALTY, 10000],
   ]);
 
 
@@ -41,11 +43,19 @@ export class ResourceGenerator {
     for (const advisor of advisors) {
       const advisorConfig = config.advisors.get(advisor.type);
       if (advisorConfig) {
-        // Apply bonus to all resources based on advisor type
-        for (const [resourceType, currentRate] of rates) {
-          const resourceConfig = config.resources.get(resourceType);
-          if (resourceConfig) {
-            rates.set(resourceType, currentRate * advisorConfig.effectMultiplier);
+        // Special handling for Court Chaplain - only affects loyalty
+        if (advisor.type === AdvisorType.COURT_CHAPLAIN) {
+          const loyaltyRate = rates.get(ResourceType.LOYALTY);
+          if (loyaltyRate !== undefined) {
+            rates.set(ResourceType.LOYALTY, loyaltyRate * advisorConfig.effectMultiplier);
+          }
+        } else {
+          // Apply bonus to all resources for other advisor types
+          for (const [resourceType, currentRate] of rates) {
+            const resourceConfig = config.resources.get(resourceType);
+            if (resourceConfig) {
+              rates.set(resourceType, currentRate * advisorConfig.effectMultiplier);
+            }
           }
         }
       }

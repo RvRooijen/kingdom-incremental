@@ -29,6 +29,7 @@ export class Kingdom extends AggregateRoot {
     [ResourceType.INFLUENCE, 0],
     [ResourceType.FAITH, 0],
     [ResourceType.KNOWLEDGE, 0],
+    [ResourceType.LOYALTY, 0],
   ]);
   private _prestigeLevel: number = 0;
   private _completedEventsCount: number = 0;

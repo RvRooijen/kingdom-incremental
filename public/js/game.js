@@ -88,6 +88,7 @@ function initializeElements() {
         influence: document.getElementById('influence'),
         influenceRate: document.getElementById('influence-rate'),
         loyalty: document.getElementById('loyalty'),
+        loyaltyRate: document.getElementById('loyalty-rate'),
         population: document.getElementById('population'),
         militaryPower: document.getElementById('military-power'),
         
@@ -353,6 +354,23 @@ function updateKingdomDisplay() {
     
     // Update advisor affordability
     updateAdvisorAffordability();
+}
+
+// Update generation rates display
+function updateGenerationRates() {
+    const kingdom = gameState.kingdom;
+    if (!kingdom || !kingdom.generationRates) return;
+    
+    // Update rate displays
+    if (elements.goldRate) {
+        elements.goldRate.textContent = kingdom.generationRates.gold?.toFixed(2) || '0';
+    }
+    if (elements.influenceRate) {
+        elements.influenceRate.textContent = kingdom.generationRates.influence?.toFixed(2) || '0';
+    }
+    if (elements.loyaltyRate) {
+        elements.loyaltyRate.textContent = kingdom.generationRates.loyalty?.toFixed(2) || '0';
+    }
 }
 
 // Update advisors display

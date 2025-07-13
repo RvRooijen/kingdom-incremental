@@ -27,7 +27,7 @@ export class GetKingdomStateQuery {
       resources: {
         gold: kingdom.getResource(ResourceType.GOLD),
         influence: kingdom.getResource(ResourceType.INFLUENCE),
-        loyalty: kingdom.resources.loyalty,
+        loyalty: kingdom.getResource(ResourceType.LOYALTY),
         population: kingdom.resources.population,
         militaryPower: kingdom.resources.militaryPower,
         faith: kingdom.getResource(ResourceType.FAITH),
@@ -58,7 +58,8 @@ export class GetKingdomStateQuery {
         gold: generationRates.get(ResourceType.GOLD) || 0,
         influence: generationRates.get(ResourceType.INFLUENCE) || 0,
         faith: generationRates.get(ResourceType.FAITH) || 0,
-        knowledge: generationRates.get(ResourceType.KNOWLEDGE) || 0
+        knowledge: generationRates.get(ResourceType.KNOWLEDGE) || 0,
+        loyalty: generationRates.get(ResourceType.LOYALTY) || 0
       }
     };
 
