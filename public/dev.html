@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingdom Incremental - Dev Admin</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2a2a2a;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --accent: #4a90e2;
+            --success: #5cb85c;
+            --danger: #d9534f;
+            --warning: #f0ad4e;
+            --border: #444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--bg-secondary);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--accent);
+            font-size: 2rem;
+        }
+
+        .auth-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+
+        .status-indicator.authenticated {
+            background: var(--success);
+        }
+
+        .auth-form {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .auth-form input {
+            width: 300px;
+            padding: 10px;
+            margin-right: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #3a7bc8;
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        button.danger:hover {
+            background: #c9302c;
+        }
+
+        button.success {
+            background: var(--success);
+        }
+
+        button.success:hover {
+            background: #4cae4c;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .tab:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .section h3 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        input[type="number"] {
+            width: 150px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .resource-config, .advisor-config, .faction-config {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .event-item {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .event-item h4 {
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        .event-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .event-actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .choice-item {
+            background: var(--bg-primary);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(92, 184, 92, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .message.error {
+            background: rgba(217, 83, 79, 0.2);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .json-editor {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Kingdom Incremental - Dev Admin</h1>
+            <div class="auth-status">
+                <span id="auth-status-text">Not Authenticated</span>
+                <div id="status-indicator" class="status-indicator"></div>
+            </div>
+        </header>
+
+        <div id="message" class="message"></div>
+
+        <div id="auth-section" class="auth-form">
+            <input type="password" id="auth-password" placeholder="Enter dev password">
+            <button onclick="authenticate()">Authenticate</button>
+        </div>
+
+        <div id="admin-content" style="display: none;">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('resources')">Resources</div>
+                <div class="tab" onclick="switchTab('advisors')">Advisors</div>
+                <div class="tab" onclick="switchTab('factions')">Factions</div>
+                <div class="tab" onclick="switchTab('events')">Events</div>
+                <div class="tab" onclick="switchTab('achievements')">Achievements</div>
+                <div class="tab" onclick="switchTab('prestige')">Prestige</div>
+                <div class="tab" onclick="switchTab('general')">General</div>
+                <div class="tab" onclick="switchTab('raw')">Raw Config</div>
+            </div>
+
+            <!-- Resources Tab -->
+            <div id="resources-tab" class="tab-content active">
+                <div class="section">
+                    <h2>Resource Configuration</h2>
+                    <div id="resources-config"></div>
+                    <button onclick="saveResourceConfig()" class="success">Save Resource Config</button>
+                </div>
+            </div>
+
+            <!-- Advisors Tab -->
+            <div id="advisors-tab" class="tab-content">
+                <div class="section">
+                    <h2>Advisor Configuration</h2>
+                    <div id="advisors-config"></div>
+                    <button onclick="saveAdvisorConfig()" class="success">Save Advisor Config</button>
+                </div>
+            </div>
+
+            <!-- Factions Tab -->
+            <div id="factions-tab" class="tab-content">
+                <div class="section">
+                    <h2>Faction Configuration</h2>
+                    <div id="factions-config"></div>
+                    <button onclick="addFaction()">Add New Faction</button>
+                    <button onclick="saveFactionConfig()" class="success">Save Faction Config</button>
+                </div>
+            </div>
+
+            <!-- Events Tab -->
+            <div id="events-tab" class="tab-content">
+                <div class="section">
+                    <h2>Event Management</h2>
+                    <button onclick="showCreateEventForm()">Create New Event</button>
+                    <div id="event-form" style="display: none; margin-top: 20px;">
+                        <h3>New Event</h3>
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" id="event-title">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="event-description"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select id="event-type">
+                                <option value="political">Political</option>
+                                <option value="economic">Economic</option>
+                                <option value="military">Military</option>
+                                <option value="social">Social</option>
+                                <option value="diplomatic">Diplomatic</option>
+                                <option value="faction">Faction</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Weight (spawn chance)</label>
+                            <input type="number" id="event-weight" value="1" min="0" max="10" step="0.1">
+                        </div>
+                        <div id="event-choices">
+                            <h4>Choices</h4>
+                            <div id="choices-list"></div>
+                            <button onclick="addChoice()">Add Choice</button>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <button onclick="saveNewEvent()" class="success">Create Event</button>
+                            <button onclick="hideCreateEventForm()">Cancel</button>
+                        </div>
+                    </div>
+                    <div id="events-list" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- Achievements Tab -->
+            <div id="achievements-tab" class="tab-content">
+                <div class="section">
+                    <h2>Achievement Configuration</h2>
+                    <div id="achievements-config"></div>
+                    <button onclick="addAchievement()">Add New Achievement</button>
+                    <button onclick="saveAchievementConfig()" class="success">Save Achievement Config</button>
+                </div>
+            </div>
+
+            <!-- Prestige Tab -->
+            <div id="prestige-tab" class="tab-content">
+                <div class="section">
+                    <h2>Prestige Configuration</h2>
+                    <div id="prestige-config"></div>
+                    <button onclick="savePrestigeConfig()" class="success">Save Prestige Config</button>
+                </div>
+            </div>
+
+            <!-- General Tab -->
+            <div id="general-tab" class="tab-content">
+                <div class="section">
+                    <h2>General Configuration</h2>
+                    <div id="general-config"></div>
+                    <button onclick="saveGeneralConfig()" class="success">Save General Config</button>
+                </div>
+            </div>
+
+            <!-- Raw Config Tab -->
+            <div id="raw-tab" class="tab-content">
+                <div class="section">
+                    <h2>Raw Configuration (JSON)</h2>
+                    <textarea id="raw-config" class="json-editor" style="width: 100%; min-height: 500px;"></textarea>
+                    <button onclick="saveRawConfig()" class="success">Save Raw Config</button>
+                    <button onclick="loadConfig()">Reload from Server</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('devAuthToken') || '';
+        let currentConfig = {};
+
+        // Check authentication on load
+        window.onload = function() {
+            if (authToken) {
+                checkAuth();
+            }
+        };
+
+        async function authenticate() {
+            const password = document.getElementById('auth-password').value;
+            authToken = password;
+            localStorage.setItem('devAuthToken', authToken);
+            await checkAuth();
+        }
+
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/dev/config', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    document.getElementById('auth-section').style.display = 'none';
+                    document.getElementById('admin-content').style.display = 'block';
+                    document.getElementById('auth-status-text').textContent = 'Authenticated';
+                    document.getElementById('status-indicator').classList.add('authenticated');
+                    await loadConfig();
+                } else {
+                    showAuthForm();
+                }
+            } catch (error) {
+                showAuthForm();
+                showMessage('Authentication failed: ' + error.message, 'error');
+            }
+        }
+
+        function showAuthForm() {
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('admin-content').style.display = 'none';
+            document.getElementById('auth-status-text').textContent = 'Not Authenticated';
+            document.getElementById('status-indicator').classList.remove('authenticated');
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Add active class to clicked tab button
+            event.target.classList.add('active');
+        }
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/dev/config', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load config');
+
+                currentConfig = await response.json();
+                displayConfig();
+                showMessage('Configuration loaded successfully', 'success');
+            } catch (error) {
+                showMessage('Failed to load configuration: ' + error.message, 'error');
+            }
+        }
+
+        function displayConfig() {
+            displayResources();
+            displayAdvisors();
+            displayFactions();
+            displayEvents();
+            displayAchievements();
+            displayPrestige();
+            displayGeneral();
+            displayRawConfig();
+        }
+
+        function displayResources() {
+            const container = document.getElementById('resources-config');
+            container.innerHTML = '';
+
+            for (const [type, config] of Object.entries(currentConfig.resources || {})) {
+                const div = document.createElement('div');
+                div.className = 'resource-config';
+                div.innerHTML = `
+                    <h3>${type}</h3>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Base Generation Rate</label>
+                            <input type="number" id="resource-${type}-baseGenerationRate" value="${config.baseGenerationRate}" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Advisor Multiplier</label>
+                            <input type="number" id="resource-${type}-advisorMultiplier" value="${config.advisorMultiplier}" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Prestige Multiplier</label>
+                            <input type="number" id="resource-${type}-prestigeMultiplier" value="${config.prestigeMultiplier}" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Base Cost</label>
+                            <input type="number" id="resource-${type}-baseCost" value="${config.baseCost}" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Cost Multiplier</label>
+                            <input type="number" id="resource-${type}-costMultiplier" value="${config.costMultiplier}" step="0.1">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        function displayAdvisors() {
+            const container = document.getElementById('advisors-config');
+            container.innerHTML = '';
+
+            for (const [type, config] of Object.entries(currentConfig.advisors || {})) {
+                const div = document.createElement('div');
+                div.className = 'advisor-config';
+                div.innerHTML = `
+                    <h3>${type}</h3>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Effect Multiplier</label>
+                            <input type="number" id="advisor-${type}-effectMultiplier" value="${config.effectMultiplier}" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Max Count</label>
+                            <input type="number" id="advisor-${type}-maxCount" value="${config.maxCount}" step="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Base Cost (JSON)</label>
+                        <textarea id="advisor-${type}-baseCost" class="json-editor">${JSON.stringify(config.baseCost, null, 2)}</textarea>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        function displayFactions() {
+            const container = document.getElementById('factions-config');
+            container.innerHTML = '';
+
+            (currentConfig.factions || []).forEach((faction, index) => {
+                const div = document.createElement('div');
+                div.className = 'faction-config';
+                div.innerHTML = `
+                    <h3>${faction.name}</h3>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="faction-${index}-description" value="${faction.description}">
+                    </div>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Base Influence</label>
+                            <input type="number" id="faction-${index}-baseInfluence" value="${faction.baseInfluence}" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Max Influence</label>
+                            <input type="number" id="faction-${index}-maxInfluence" value="${faction.maxInfluence}" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Decay Rate</label>
+                            <input type="number" id="faction-${index}-decayRate" value="${faction.decayRate}" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Event Weight</label>
+                            <input type="number" id="faction-${index}-eventWeight" value="${faction.eventWeight}" step="0.1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bonuses (JSON)</label>
+                        <textarea id="faction-${index}-bonuses" class="json-editor">${JSON.stringify(faction.bonuses, null, 2)}</textarea>
+                    </div>
+                    <button onclick="removeFaction(${index})" class="danger">Remove Faction</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function displayEvents() {
+            try {
+                const response = await fetch('/api/dev/events', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load events');
+
+                const events = await response.json();
+                const container = document.getElementById('events-list');
+                container.innerHTML = '<h3>Existing Events</h3>';
+
+                events.forEach(event => {
+                    const div = document.createElement('div');
+                    div.className = 'event-item';
+                    div.innerHTML = `
+                        <div class="event-actions">
+                            <button onclick="editEvent('${event.id}')">Edit</button>
+                            <button onclick="deleteEvent('${event.id}')" class="danger">Delete</button>
+                        </div>
+                        <h4>${event.title}</h4>
+                        <p>${event.description}</p>
+                        <p><strong>Type:</strong> ${event.type} | <strong>Weight:</strong> ${event.weight}</p>
+                        <div class="choices">
+                            <strong>Choices:</strong>
+                            ${event.choices.map(choice => `
+                                <div class="choice-item">
+                                    <strong>${choice.text}</strong>
+                                    <p>${choice.consequences.description}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                showMessage('Failed to load events: ' + error.message, 'error');
+            }
+        }
+
+        function displayAchievements() {
+            const container = document.getElementById('achievements-config');
+            container.innerHTML = '';
+
+            (currentConfig.achievements || []).forEach((achievement, index) => {
+                const div = document.createElement('div');
+                div.className = 'faction-config';
+                div.innerHTML = `
+                    <h3>${achievement.name}</h3>
+                    <div class="form-group">
+                        <label>ID</label>
+                        <input type="text" id="achievement-${index}-id" value="${achievement.id}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="achievement-${index}-description">${achievement.description}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Requirements (JSON)</label>
+                        <textarea id="achievement-${index}-requirements" class="json-editor">${JSON.stringify(achievement.requirements, null, 2)}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Reward (JSON)</label>
+                        <textarea id="achievement-${index}-reward" class="json-editor">${JSON.stringify(achievement.reward || {}, null, 2)}</textarea>
+                    </div>
+                    <button onclick="removeAchievement(${index})" class="danger">Remove Achievement</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function displayPrestige() {
+            const container = document.getElementById('prestige-config');
+            const prestige = currentConfig.prestige || {};
+            
+            container.innerHTML = `
+                <div class="form-group">
+                    <label>Base Requirements (JSON)</label>
+                    <textarea id="prestige-baseRequirement" class="json-editor">${JSON.stringify(prestige.baseRequirement || {}, null, 2)}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Requirement Multiplier</label>
+                    <input type="number" id="prestige-requirementMultiplier" value="${prestige.requirementMultiplier || 2.5}" step="0.1">
+                </div>
+                <h3>Bonus Per Level</h3>
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Resource Multiplier</label>
+                        <input type="number" id="prestige-resourceMultiplier" value="${prestige.bonusPerLevel?.resourceMultiplier || 0.1}" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Advisor Cost Reduction</label>
+                        <input type="number" id="prestige-advisorCostReduction" value="${prestige.bonusPerLevel?.advisorCostReduction || 0.05}" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Event Frequency Bonus</label>
+                        <input type="number" id="prestige-eventFrequencyBonus" value="${prestige.bonusPerLevel?.eventFrequencyBonus || 0.1}" step="0.01">
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayGeneral() {
+            const container = document.getElementById('general-config');
+            const general = currentConfig.general || {};
+            
+            container.innerHTML = `
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Tick Rate (ms)</label>
+                        <input type="number" id="general-tickRate" value="${general.tickRate || 1000}" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Save Interval (ms)</label>
+                        <input type="number" id="general-saveInterval" value="${general.saveInterval || 30000}" step="1000">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Active Events</label>
+                        <input type="number" id="general-maxActiveEvents" value="${general.maxActiveEvents || 3}" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Event Spawn Chance</label>
+                        <input type="number" id="general-eventSpawnChance" value="${general.eventSpawnChance || 0.05}" step="0.01" min="0" max="1">
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayRawConfig() {
+            document.getElementById('raw-config').value = JSON.stringify(currentConfig, null, 2);
+        }
+
+        async function saveResourceConfig() {
+            const resources = {};
+            
+            for (const type of Object.keys(currentConfig.resources || {})) {
+                resources[type] = {
+                    baseGenerationRate: parseFloat(document.getElementById(`resource-${type}-baseGenerationRate`).value),
+                    advisorMultiplier: parseFloat(document.getElementById(`resource-${type}-advisorMultiplier`).value),
+                    prestigeMultiplier: parseFloat(document.getElementById(`resource-${type}-prestigeMultiplier`).value),
+                    baseCost: parseFloat(document.getElementById(`resource-${type}-baseCost`).value),
+                    costMultiplier: parseFloat(document.getElementById(`resource-${type}-costMultiplier`).value)
+                };
+            }
+
+            try {
+                const response = await fetch('/api/dev/config/resources', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(resources)
+                });
+
+                if (!response.ok) throw new Error('Failed to save resource config');
+                
+                showMessage('Resource configuration saved successfully', 'success');
+                await loadConfig();
+            } catch (error) {
+                showMessage('Failed to save resource configuration: ' + error.message, 'error');
+            }
+        }
+
+        async function saveAdvisorConfig() {
+            const advisors = {};
+            
+            for (const type of Object.keys(currentConfig.advisors || {})) {
+                advisors[type] = {
+                    effectMultiplier: parseFloat(document.getElementById(`advisor-${type}-effectMultiplier`).value),
+                    maxCount: parseInt(document.getElementById(`advisor-${type}-maxCount`).value),
+                    baseCost: JSON.parse(document.getElementById(`advisor-${type}-baseCost`).value)
+                };
+            }
+
+            try {
+                const response = await fetch('/api/dev/config/advisors', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(advisors)
+                });
+
+                if (!response.ok) throw new Error('Failed to save advisor config');
+                
+                showMessage('Advisor configuration saved successfully', 'success');
+                await loadConfig();
+            } catch (error) {
+                showMessage('Failed to save advisor configuration: ' + error.message, 'error');
+            }
+        }
+
+        async function saveFactionConfig() {
+            const factions = [];
+            
+            (currentConfig.factions || []).forEach((faction, index) => {
+                const nameElement = document.getElementById(`faction-${index}-name`);
+                factions.push({
+                    name: nameElement ? nameElement.value : faction.name,
+                    description: document.getElementById(`faction-${index}-description`).value,
+                    baseInfluence: parseFloat(document.getElementById(`faction-${index}-baseInfluence`).value),
+                    maxInfluence: parseFloat(document.getElementById(`faction-${index}-maxInfluence`).value),
+                    decayRate: parseFloat(document.getElementById(`faction-${index}-decayRate`).value),
+                    eventWeight: parseFloat(document.getElementById(`faction-${index}-eventWeight`).value),
+                    bonuses: JSON.parse(document.getElementById(`faction-${index}-bonuses`).value)
+                });
+            });
+
+            try {
+                const response = await fetch('/api/dev/config/factions', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(factions)
+                });
+
+                if (!response.ok) throw new Error('Failed to save faction config');
+                
+                showMessage('Faction configuration saved successfully', 'success');
+                await loadConfig();
+            } catch (error) {
+                showMessage('Failed to save faction configuration: ' + error.message, 'error');
+            }
+        }
+
+        async function savePrestigeConfig() {
+            const prestige = {
+                baseRequirement: JSON.parse(document.getElementById('prestige-baseRequirement').value),
+                requirementMultiplier: parseFloat(document.getElementById('prestige-requirementMultiplier').value),
+                bonusPerLevel: {
+                    resourceMultiplier: parseFloat(document.getElementById('prestige-resourceMultiplier').value),
+                    advisorCostReduction: parseFloat(document.getElementById('prestige-advisorCostReduction').value),
+                    eventFrequencyBonus: parseFloat(document.getElementById('prestige-eventFrequencyBonus').value)
+                }
+            };
+
+            try {
+                const response = await fetch('/api/dev/config/prestige', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(prestige)
+                });
+
+                if (!response.ok) throw new Error('Failed to save prestige config');
+                
+                showMessage('Prestige configuration saved successfully', 'success');
+                await loadConfig();
+            } catch (error) {
+                showMessage('Failed to save prestige configuration: ' + error.message, 'error');
+            }
+        }
+
+        async function saveGeneralConfig() {
+            currentConfig.general = {
+                tickRate: parseInt(document.getElementById('general-tickRate').value),
+                saveInterval: parseInt(document.getElementById('general-saveInterval').value),
+                maxActiveEvents: parseInt(document.getElementById('general-maxActiveEvents').value),
+                eventSpawnChance: parseFloat(document.getElementById('general-eventSpawnChance').value)
+            };
+
+            await saveRawConfig();
+        }
+
+        async function saveRawConfig() {
+            try {
+                const rawConfig = document.getElementById('raw-config').value;
+                const config = JSON.parse(rawConfig);
+
+                const response = await fetch('/api/dev/config', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                if (!response.ok) throw new Error('Failed to save config');
+                
+                showMessage('Configuration saved successfully', 'success');
+                await loadConfig();
+            } catch (error) {
+                showMessage('Failed to save configuration: ' + error.message, 'error');
+            }
+        }
+
+        function showCreateEventForm() {
+            document.getElementById('event-form').style.display = 'block';
+            addChoice(); // Add one choice by default
+        }
+
+        function hideCreateEventForm() {
+            document.getElementById('event-form').style.display = 'none';
+            document.getElementById('event-title').value = '';
+            document.getElementById('event-description').value = '';
+            document.getElementById('event-type').value = 'political';
+            document.getElementById('event-weight').value = '1';
+            document.getElementById('choices-list').innerHTML = '';
+        }
+
+        let choiceCount = 0;
+        function addChoice() {
+            const choicesList = document.getElementById('choices-list');
+            const choiceId = choiceCount++;
+            
+            const choiceDiv = document.createElement('div');
+            choiceDiv.className = 'choice-item';
+            choiceDiv.id = `choice-${choiceId}`;
+            choiceDiv.innerHTML = `
+                <h4>Choice ${choiceId + 1}</h4>
+                <div class="form-group">
+                    <label>Choice Text</label>
+                    <input type="text" id="choice-${choiceId}-text">
+                </div>
+                <div class="form-group">
+                    <label>Consequence Description</label>
+                    <textarea id="choice-${choiceId}-description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Resource Changes (JSON - optional)</label>
+                    <textarea id="choice-${choiceId}-resources" class="json-editor">{}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Faction Influence Changes (JSON - optional)</label>
+                    <textarea id="choice-${choiceId}-factions" class="json-editor">{}</textarea>
+                </div>
+                <button onclick="removeChoice(${choiceId})" class="danger">Remove Choice</button>
+            `;
+            choicesList.appendChild(choiceDiv);
+        }
+
+        function removeChoice(choiceId) {
+            const choiceDiv = document.getElementById(`choice-${choiceId}`);
+            if (choiceDiv) {
+                choiceDiv.remove();
+            }
+        }
+
+        async function saveNewEvent() {
+            const choices = [];
+            const choiceElements = document.querySelectorAll('[id^="choice-"]');
+            
+            choiceElements.forEach(elem => {
+                const id = elem.id.split('-')[1];
+                const text = document.getElementById(`choice-${id}-text`).value;
+                if (text) {
+                    choices.push({
+                        text: text,
+                        consequences: {
+                            description: document.getElementById(`choice-${id}-description`).value,
+                            resources: JSON.parse(document.getElementById(`choice-${id}-resources`).value || '{}'),
+                            factionInfluence: JSON.parse(document.getElementById(`choice-${id}-factions`).value || '{}')
+                        }
+                    });
+                }
+            });
+
+            const eventData = {
+                title: document.getElementById('event-title').value,
+                description: document.getElementById('event-description').value,
+                type: document.getElementById('event-type').value,
+                weight: parseFloat(document.getElementById('event-weight').value),
+                choices: choices
+            };
+
+            try {
+                const response = await fetch('/api/dev/events', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventData)
+                });
+
+                if (!response.ok) throw new Error('Failed to create event');
+                
+                showMessage('Event created successfully', 'success');
+                hideCreateEventForm();
+                await displayEvents();
+            } catch (error) {
+                showMessage('Failed to create event: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteEvent(eventId) {
+            if (!confirm('Are you sure you want to delete this event?')) return;
+
+            try {
+                const response = await fetch(`/api/dev/events/${eventId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to delete event');
+                
+                showMessage('Event deleted successfully', 'success');
+                await displayEvents();
+            } catch (error) {
+                showMessage('Failed to delete event: ' + error.message, 'error');
+            }
+        }
+
+        function addFaction() {
+            const newFaction = {
+                name: 'New Faction',
+                description: 'Description of the new faction',
+                baseInfluence: 20,
+                maxInfluence: 100,
+                decayRate: 0.1,
+                eventWeight: 1,
+                bonuses: []
+            };
+            
+            currentConfig.factions = currentConfig.factions || [];
+            currentConfig.factions.push(newFaction);
+            displayFactions();
+        }
+
+        function removeFaction(index) {
+            if (!confirm('Are you sure you want to remove this faction?')) return;
+            
+            currentConfig.factions.splice(index, 1);
+            displayFactions();
+        }
+
+        function addAchievement() {
+            const newAchievement = {
+                id: 'achievement_' + Date.now(),
+                name: 'New Achievement',
+                description: 'Description of the achievement',
+                requirements: {},
+                reward: {}
+            };
+            
+            currentConfig.achievements = currentConfig.achievements || [];
+            currentConfig.achievements.push(newAchievement);
+            displayAchievements();
+        }
+
+        function removeAchievement(index) {
+            if (!confirm('Are you sure you want to remove this achievement?')) return;
+            
+            currentConfig.achievements.splice(index, 1);
+            displayAchievements();
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
